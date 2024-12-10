@@ -1,6 +1,7 @@
 import math
 
 gravity_force = 9.8
+density = 1.293
 def compute_line_rocket(x0, y0, velocity, angle, wind_speed, wind_angle):
     """
     Generates a dictionary of rocket line data WITHOUT FRICTION
@@ -79,3 +80,10 @@ def compute_line_grenade(x0, y0, velocity, angle, friction):
         line.append({"time": t, "x": x, "y": y})
 
     return line
+
+def compute_archimedes_velocity(radius):
+    """
+    Computes the terminal velocity of an object in a fluid
+    Parameters: Fluid density (float), object volume (float), gravity force (float)
+    """
+    return (math.pi * radius**2 / 2) * density * gravity_force
