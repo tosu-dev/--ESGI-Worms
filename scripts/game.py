@@ -63,10 +63,10 @@ class Game:
         self.tilemap = load_map(self, "map.json")
         self.players = [
             Player(self, (0, 0), (8, 15)),
-            # Player(self, (0, 0), (8, 15)),
+            Player(self, (0, 0), (8, 15)),
         ]
 
-        self.movement = [False, False]
+        self.movement =  [[False, False], [False, False],]
         self.scroll = [0, 0]
         self.screenshake = 0
         self.player_turn = 0
@@ -83,12 +83,11 @@ class Game:
         for spawner in self.tilemap.extract([('spawners', 0), ('spawners', 1)]):
             if spawner['variant'] == 0:
                 self.players[0].pos = spawner['pos']
-            else:
-                # self.players[1].pos = spawner['pos']
-                pass
+            elif spawner['variant'] == 1:
+                self.players[1].pos = spawner['pos']
         
-        self.scroll[0] = self.players[0].rect().centerx - self.display.get_width()/2 
-        self.scroll[1] = self.players[0].rect().centery - self.display.get_height()/2
+        self.scroll[0] = self.players[self.player_turn].rect().centerx - self.display.get_width()/2 
+        self.scroll[1] = self.players[self.player_turn].rect().centery - self.display.get_height()/2
     
     def play_sfx(self, name):
         if self.sfx.get(name):
@@ -111,29 +110,33 @@ class Game:
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
-                    
+
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_LEFT:
-                        self.movement[0] = True
+                        self.movement[self.player_turn][0] = True
                     if event.key == pygame.K_RIGHT:
-                        self.movement[1] = True
+                        self.movement[self.player_turn][1] = True
                     if event.key == pygame.K_UP:
                         self.players[self.player_turn].jump()
+                    if event.key == pygame.K_s:
+                        self.player_turn = (self.player_turn + 1) % 2
+                        self.movement =  [[False, False], [False, False],]
 
                 if event.type == pygame.KEYUP:
                     if event.key == pygame.K_LEFT:
-                        self.movement[0] = False
+                        self.movement[self.player_turn][0] = False
                     if event.key == pygame.K_RIGHT:
-                        self.movement[1] = False
+                        self.movement[self.player_turn][1] = False
             # ==================== END EVENT ==================== #
 
 
             # ==================== START UPDATE ==================== #
-            self.scroll[0] += (self.players[0].rect().centerx - self.display.get_width()/2 - self.scroll[0]) / 30
-            self.scroll[1] += (self.players[0].rect().centery - self.display.get_height()/2 - self.scroll[1]) / 30
+            self.scroll[0] += (self.players[self.player_turn].rect().centerx - self.display.get_width()/2 - self.scroll[0]) / 30
+            self.scroll[1] += (self.players[self.player_turn].rect().centery - self.display.get_height()/2 - self.scroll[1]) / 30
             render_scroll = (int(self.scroll[0]), int(self.scroll[1]))
 
-            self.players[0].update(self.tilemap, movement=(self.movement[1] - self.movement[0], 0))
+            self.players[0].update(self.tilemap, movement=(self.movement[0][1] - self.movement[0][0], 0))
+            self.players[1].update(self.tilemap, movement=(self.movement[1][1] - self.movement[1][0], 0))
             # ==================== END UPDATE ==================== #
 
 
@@ -142,6 +145,7 @@ class Game:
 
             self.tilemap.render(self.display, offset=render_scroll)
             self.players[0].render(self.display, offset=render_scroll)
+            self.players[1].render(self.display, offset=render_scroll)
 
             self.screen.blit(pygame.transform.scale(self.display, self.screen.get_size()), ((random() * self.screenshake - self.screenshake / 2), (random() * self.screenshake - self.screenshake / 2)))
             

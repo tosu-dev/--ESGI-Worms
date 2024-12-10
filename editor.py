@@ -143,6 +143,7 @@ class Editor:
                         if self.ctrl_clicking:
                             print('saving...')
                             self.tilemap.save('data/maps/map.json')
+                            print('saved')
 
                 if event.type == pygame.KEYUP:
                     if event.key == pygame.K_LEFT:

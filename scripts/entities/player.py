@@ -17,6 +17,8 @@ class Player(PhysicsEntity):
     def update(self, tilemap, movement=(0, 0)):
         super().update(tilemap, movement)
 
+        self.air_time += 1
+
         if self.collisions['bottom']:
             self.air_time = 0
             self.jumps = self.max_jumps
