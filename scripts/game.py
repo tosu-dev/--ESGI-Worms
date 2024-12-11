@@ -32,11 +32,11 @@ class Game:
         self.clock = pygame.time.Clock()
         self.target_fps = TARGET_FPS
         self.fps = FPS
-        self.delta_time = 0   
+        self.delta_time = 0
 
         self.assets = {
             'bg': load_image('background.png'),
-      
+
             'decor'      : load_images('tiles/decor'),
             'grass'      : load_images('tiles/grass'),
             'large_decor': load_images('tiles/large_decor'),
@@ -47,7 +47,7 @@ class Game:
             'player/run': Animation(load_images('entities/player/run'), 4),
             'player/jump': Animation(load_images('entities/player/jump')),
         }
-        
+
         self.musics = {
             'default': pygame.mixer.Sound(MUSIC_PATH + 'music.wav'),
         }
@@ -66,7 +66,7 @@ class Game:
             Player(self, (0, 0), (8, 15)),
         ]
 
-        self.movement =  [[False, False], [False, False],]
+        self.movement = [[False, False], [False, False],]
         self.scroll = [0, 0]
         self.screenshake = 0
         self.player_turn = 0
@@ -79,16 +79,16 @@ class Game:
         self.players[0].air_time = 0
         self.scroll = [0, 0]
         self.screenshake = 0
- 
+
         for spawner in self.tilemap.extract([('spawners', 0), ('spawners', 1)]):
             if spawner['variant'] == 0:
                 self.players[0].pos = spawner['pos']
             elif spawner['variant'] == 1:
                 self.players[1].pos = spawner['pos']
-        
-        self.scroll[0] = self.players[self.player_turn].rect().centerx - self.display.get_width()/2 
+
+        self.scroll[0] = self.players[self.player_turn].rect().centerx - self.display.get_width()/2
         self.scroll[1] = self.players[self.player_turn].rect().centery - self.display.get_height()/2
-    
+
     def play_sfx(self, name):
         if self.sfx.get(name):
             self.sfx.get(name).stop()
@@ -117,16 +117,19 @@ class Game:
                     if event.key == pygame.K_RIGHT:
                         self.movement[self.player_turn][1] = True
                     if event.key == pygame.K_UP:
-                        self.players[self.player_turn].jump()
+                        self.players[self.player_turn].start_charge_jump()
                     if event.key == pygame.K_s:
                         self.player_turn = (self.player_turn + 1) % 2
-                        self.movement =  [[False, False], [False, False],]
+                        self.movement = [[False, False], [False, False],]
 
                 if event.type == pygame.KEYUP:
                     if event.key == pygame.K_LEFT:
                         self.movement[self.player_turn][0] = False
                     if event.key == pygame.K_RIGHT:
                         self.movement[self.player_turn][1] = False
+                    if event.key == pygame.K_UP:
+                        self.players[self.player_turn].jump()
+
             # ==================== END EVENT ==================== #
 
 
@@ -148,7 +151,7 @@ class Game:
             self.players[1].render(self.display, offset=render_scroll)
 
             self.screen.blit(pygame.transform.scale(self.display, self.screen.get_size()), ((random() * self.screenshake - self.screenshake / 2), (random() * self.screenshake - self.screenshake / 2)))
-            
+
             pygame.display.update()
             self.clock.tick(self.fps)
             # ==================== END RENDER ==================== #

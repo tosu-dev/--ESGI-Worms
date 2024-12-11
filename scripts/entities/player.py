@@ -5,16 +5,28 @@ class Player(PhysicsEntity):
         super().__init__(game, 'player', pos, size, outline=(0, 0, 0, 180))
         self.air_time = 0
         self.jumps = 1
-        self.max_jumps= 1
+        self.max_jumps = 1
+        self.charge_jumping = False
+        self.jump_force = 1.5
+
+    def start_charge_jump(self):
+        self.charge_jumping = True
 
     def jump(self):
         if self.jumps > 0 and self.air_time < 8:
             self.game.play_sfx('jump')
-            self.velocity[1] = -3
+            self.velocity[1] = -self.jump_force
             self.jumps -= 1
             self.air_time = 8
+            self.jump_force = 1.5
+            self.charge_jumping = False
 
     def update(self, tilemap, movement=(0, 0)):
+        if self.charge_jumping:
+            self.set_action('idle')
+            self.jump_force = min(self.jump_force + 0.1, 5)
+            return
+
         super().update(tilemap, movement)
 
         self.air_time += 1
