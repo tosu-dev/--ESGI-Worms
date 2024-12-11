@@ -22,7 +22,7 @@ def compute_line_rocket(x0, y0, velocity, angle, wind_speed, wind_angle, frictio
     angle = math.atan(velocity_y / velocity_x)
     t = 0.0
     y = 1
-    if type(friction == None):      # Compute without friction
+    if friction == None:      # Compute without friction
         while True:
             x = x0 + velocity * math.cos(angle) * t
             y = y0 + velocity * math.sin(angle) * t - 0.5 * gravity_force * t**2
@@ -52,7 +52,7 @@ def compute_line_grenade(x0, y0, velocity, angle, friction = None, step = step):
 
     t = 0.0
     y = 1
-    if type(friction == None):      # Compute without friction
+    if friction == None:      # Compute without friction
         while True:
             x = x0 + velocity * math.cos(angle) * t
             y = y0 + velocity * math.sin(angle) * t - 0.5 * 9.8 * t**2
