@@ -8,6 +8,7 @@ from scripts.core.colors import *
 from scripts.core.constants import *
 from scripts.core.utils import *
 from scripts.entities.player import Player
+from scripts.features.timer import Timer
 
 class Game:
     # ===== SINGLETON =====
@@ -71,6 +72,9 @@ class Game:
         self.screenshake = 0
         self.player_turn = 0
 
+        pygame.time.set_timer(pygame.USEREVENT, 1000)
+        self.timer = Timer(5, (50, 50))
+
         self.load_level()
 
 
@@ -111,6 +115,13 @@ class Game:
                     pygame.quit()
                     sys.exit()
 
+                if event.type == pygame.USEREVENT:
+                    self.timer.countdown()
+                    if self.timer.is_finished():
+                        self.timer.reset()
+                        self.player_turn = (self.player_turn + 1) % 2
+                        self.movement = [[False, False], [False, False],]
+
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_LEFT:
                         self.movement[self.player_turn][0] = True
@@ -118,9 +129,6 @@ class Game:
                         self.movement[self.player_turn][1] = True
                     if event.key == pygame.K_UP:
                         self.players[self.player_turn].start_charge_jump()
-                    if event.key == pygame.K_s:
-                        self.player_turn = (self.player_turn + 1) % 2
-                        self.movement = [[False, False], [False, False],]
 
                 if event.type == pygame.KEYUP:
                     if event.key == pygame.K_LEFT:
@@ -149,6 +157,8 @@ class Game:
             self.tilemap.render(self.display, offset=render_scroll)
             self.players[0].render(self.display, offset=render_scroll)
             self.players[1].render(self.display, offset=render_scroll)
+
+            self.timer.render(self.display, (20, 20))
 
             self.screen.blit(pygame.transform.scale(self.display, self.screen.get_size()), ((random() * self.screenshake - self.screenshake / 2), (random() * self.screenshake - self.screenshake / 2)))
 
