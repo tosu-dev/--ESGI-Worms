@@ -1,7 +1,7 @@
 import pygame
 
 from scripts.core.constants import FPS
-from scripts.core.utils import SFX_PATH, play_sfx
+from scripts.core.utils import SFX_PATH, play_sfx, position_with_offset, position_to_int
 from scripts.entities.physics_entity import PhysicsEntity
 from math import atan2, degrees, sqrt, pi
 
@@ -21,6 +21,8 @@ class Player(PhysicsEntity):
         self.jump_sound = pygame.mixer.Sound(SFX_PATH + 'jump.wav')
         self.jump_sound.set_volume(0.7)
 
+        self.shoot_offset = [10, 10]
+
     def start_charge_jump(self):
         if self.jumps > 0:
             self.charge_jumping = True
@@ -34,18 +36,19 @@ class Player(PhysicsEntity):
             self.jump_force = 1.5
             self.charge_jumping = False
 
-    def shoot(self, mouse_pos, offset=(0, 0)):
-        player_pos = (int(self.pos[0] - offset[0] + self.anim_offset[0] + 10),
-                      int(self.pos[1] - offset[1] + self.anim_offset[1] + 10))
-        self.rockets.append(Rocket.create(player_pos, mouse_pos))
+    def shoot(self):
+        mouse_pos = self.game.mouse_pos
+        offset = self.game.scroll
+        mouse_pos = mouse_pos[0] + offset[0], mouse_pos[1] + offset[1]
+        pos = position_with_offset(self.pos, self.shoot_offset, add=True)
+        self.rockets.append(Rocket.create(pos, mouse_pos))
 
     def update(self, tilemap, movement=(0, 0), delta_time=1):
         if self.charge_jumping:
             self.set_action('idle')
             self.jump_force = min(self.jump_force + 0.1, 5)
-            return
-
-        super().update(tilemap, movement, delta_time)
+        else:
+            super().update(tilemap, movement, delta_time)
 
         self.air_time += 1
 
@@ -77,5 +80,14 @@ class Player(PhysicsEntity):
 
     def render(self, surf, offset=(0, 0)):
         super().render(surf, offset)
+
+        mouse_pos = self.game.mouse_pos
+        offset = self.game.scroll
+        mouse_pos = position_with_offset(mouse_pos, offset, add=True)
+        pos = position_with_offset(self.pos, self.shoot_offset, add=True)
+        rocket_trajectory = Rocket.calculate_trajectory(self.game.tilemap, position_to_int(pos), mouse_pos, FPS)
+        for point in rocket_trajectory:
+            pygame.draw.circle(surf, (255, 255, 255), position_with_offset(point, offset), 2)
+
         for rocket in self.rockets:
-            rocket.render(surf)
+            rocket.render(surf, offset)

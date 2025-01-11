@@ -53,6 +53,13 @@ class TileMap:
 
         return matches
 
+    def is_pos_in_tile(self, pos, physics=True):
+        tile_loc = (int(pos[0] // self.tile_size), int(pos[1] // self.tile_size))
+        loc = str(tile_loc[0]) + ';' + str(tile_loc[1])
+        if physics:
+            return loc in self.tilemap and self.tilemap[loc]['type'] in PHYSICS_TILES
+        return loc in self.tilemap
+
     def tiles_around(self, pos):
         tiles = []
         tile_loc = (int(pos[0] // self.tile_size), int(pos[1] // self.tile_size))

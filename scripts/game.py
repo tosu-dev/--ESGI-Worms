@@ -29,6 +29,7 @@ class Game:
         self.__initialized = True
 
         pygame.init()
+        pygame.font.init()
 
         pygame.display.set_caption('Worms')
         self.render_scale = 1
@@ -70,6 +71,8 @@ class Game:
             Player(self, (0, 0), (8, 15)),
         ]
 
+        self.mouse_pos = [0, 0]
+
         self.movement = [[False, False], [False, False], ]
         self.scroll = [0, 0]
         self.screenshake = 0
@@ -106,6 +109,16 @@ class Game:
             self.delta_time = (time() - prev_time) * self.target_fps
             prev_time = time()
 
+            # Get mouse pos
+            self.mouse_pos = pygame.mouse.get_pos()
+
+            # Camera
+            self.scroll[0] += (self.players[self.player_turn].rect().centerx - self.display.get_width() / 2 -
+                               self.scroll[0]) / 30
+            self.scroll[1] += (self.players[self.player_turn].rect().centery - self.display.get_height() / 2 -
+                               self.scroll[1]) / 30
+            render_scroll = (int(self.scroll[0]), int(self.scroll[1]))
+
             # ==================== START EVENT ==================== #
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -137,16 +150,9 @@ class Game:
 
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if event.button == 1:
-                        self.players[self.player_turn].shoot(event.pos, offset=self.scroll)
+                        self.players[self.player_turn].shoot()
 
             # ==================== END EVENT ==================== #
-
-            # Camera
-            self.scroll[0] += (self.players[self.player_turn].rect().centerx - self.display.get_width() / 2 -
-                               self.scroll[0]) / 30
-            self.scroll[1] += (self.players[self.player_turn].rect().centery - self.display.get_height() / 2 -
-                               self.scroll[1]) / 30
-            render_scroll = (int(self.scroll[0]), int(self.scroll[1]))
 
             # Background
             self.display.blit(pygame.transform.scale(self.assets['bg'], self.display.get_size()), (0, 0))
@@ -160,7 +166,7 @@ class Game:
             self.players[1].update(self.tilemap, movement=(self.movement[1][1] - self.movement[1][0], 0),
                                    delta_time=self.delta_time)
             self.players[0].render(self.display, offset=render_scroll)
-            self.players[1].render(self.display, offset=render_scroll)
+            #self.players[1].render(self.display, mouse_pos=mouse_pos, offset=render_scroll)
 
             # Timer
             self.timer.render(self.display, (20, 20))

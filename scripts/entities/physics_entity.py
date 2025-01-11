@@ -1,5 +1,8 @@
 from pygame import transform, Rect, mask
 
+from scripts.core.utils import pg_debug
+
+
 class PhysicsEntity:
     def __init__(self, game, e_type, pos, size, outline=None):
         self.game = game
@@ -13,6 +16,7 @@ class PhysicsEntity:
         self.flip = False
         self.set_action('idle')
         self.outline = outline
+
 
     def rect(self):
         return Rect(self.pos[0], self.pos[1], self.size[0], self.size[1])
@@ -62,8 +66,11 @@ class PhysicsEntity:
 
         self.animation.update(delta_time=delta_time)
 
+    def get_render_pos(self, offset=(0, 0)):
+        return [self.pos[0] - offset[0] + self.anim_offset[0], self.pos[1] - offset[1] + self.anim_offset[1]]
+
     def render(self, surf, offset=(0, 0)):
-        pos = (self.pos[0]-offset[0]+self.anim_offset[0], self.pos[1]-offset[1]+self.anim_offset[1])
+        pos = self.get_render_pos(offset)
         if self.outline:
             entity_mask = mask.from_surface(transform.flip(self.animation.img(), self.flip, False))
             entity_silouhette = entity_mask.to_surface(setcolor=self.outline, unsetcolor=(0, 0, 0, 0))
