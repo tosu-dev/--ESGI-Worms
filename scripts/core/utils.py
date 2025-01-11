@@ -30,3 +30,7 @@ def load_maps(game):
     for map_name in sorted(os.listdir(MAP_PATH)):
         maps.append(load_map(game, map_name))
     return maps
+
+def play_sfx(sfx):
+    sfx.stop()
+    sfx.play()

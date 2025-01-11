@@ -1,3 +1,6 @@
+# TODO : Framerate independant gravity
+from math import cos, sin
+
 import pygame
 import sys
 from time import time
@@ -10,15 +13,16 @@ from scripts.core.utils import *
 from scripts.entities.player import Player
 from scripts.features.timer import Timer
 
+
 class Game:
     # ===== SINGLETON =====
     __instance = None
+
     def __new__(cls):
         if cls.__instance is None:
             cls.__instance = super(Game, cls).__new__(cls)
             cls.__instance.__initialized = False
         return cls.__instance
-
 
     def __init__(self):
         if (self.__initialized): return
@@ -37,12 +41,13 @@ class Game:
 
         self.assets = {
             'bg': load_image('background.png'),
+            'projectile': load_image('projectile.png'),
 
-            'decor'      : load_images('tiles/decor'),
-            'grass'      : load_images('tiles/grass'),
+            'decor': load_images('tiles/decor'),
+            'grass': load_images('tiles/grass'),
             'large_decor': load_images('tiles/large_decor'),
-            'spawners'   : load_images('tiles/spawners'),
-            'stone'      : load_images('tiles/stone'),
+            'spawners': load_images('tiles/spawners'),
+            'stone': load_images('tiles/stone'),
 
             'player/idle': Animation(load_images('entities/player/idle'), 6),
             'player/run': Animation(load_images('entities/player/run'), 4),
@@ -56,10 +61,8 @@ class Game:
 
         self.sfx = {
             'ambience': pygame.mixer.Sound(SFX_PATH + 'ambience.wav'),
-            'jump': pygame.mixer.Sound(SFX_PATH + 'jump.wav'),
         }
         self.sfx['ambience'].set_volume(0.2)
-        self.sfx['jump'].set_volume(0.7)
 
         self.tilemap = load_map(self, "map.json")
         self.players = [
@@ -67,16 +70,15 @@ class Game:
             Player(self, (0, 0), (8, 15)),
         ]
 
-        self.movement = [[False, False], [False, False],]
+        self.movement = [[False, False], [False, False], ]
         self.scroll = [0, 0]
         self.screenshake = 0
         self.player_turn = 0
 
         pygame.time.set_timer(pygame.USEREVENT, 1000)
-        self.timer = Timer(5, (50, 50))
+        self.timer = Timer(120, (50, 50))
 
         self.load_level()
-
 
     def load_level(self):
         self.player_turn = 0
@@ -90,13 +92,8 @@ class Game:
             elif spawner['variant'] == 1:
                 self.players[1].pos = spawner['pos']
 
-        self.scroll[0] = self.players[self.player_turn].rect().centerx - self.display.get_width()/2
-        self.scroll[1] = self.players[self.player_turn].rect().centery - self.display.get_height()/2
-
-    def play_sfx(self, name):
-        if self.sfx.get(name):
-            self.sfx.get(name).stop()
-            self.sfx.get(name).play()
+        self.scroll[0] = self.players[self.player_turn].rect().centerx - self.display.get_width() / 2
+        self.scroll[1] = self.players[self.player_turn].rect().centery - self.display.get_height() / 2
 
     def run(self):
         prev_time = time()
@@ -120,7 +117,7 @@ class Game:
                     if self.timer.is_finished():
                         self.timer.reset()
                         self.player_turn = (self.player_turn + 1) % 2
-                        self.movement = [[False, False], [False, False],]
+                        self.movement = [[False, False], [False, False], ]
 
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_LEFT:
@@ -138,30 +135,38 @@ class Game:
                     if event.key == pygame.K_UP:
                         self.players[self.player_turn].jump()
 
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if event.button == 1:
+                        self.players[self.player_turn].shoot(event.pos, offset=self.scroll)
+
             # ==================== END EVENT ==================== #
 
-
-            # ==================== START UPDATE ==================== #
-            self.scroll[0] += (self.players[self.player_turn].rect().centerx - self.display.get_width()/2 - self.scroll[0]) / 30
-            self.scroll[1] += (self.players[self.player_turn].rect().centery - self.display.get_height()/2 - self.scroll[1]) / 30
+            # Camera
+            self.scroll[0] += (self.players[self.player_turn].rect().centerx - self.display.get_width() / 2 -
+                               self.scroll[0]) / 30
+            self.scroll[1] += (self.players[self.player_turn].rect().centery - self.display.get_height() / 2 -
+                               self.scroll[1]) / 30
             render_scroll = (int(self.scroll[0]), int(self.scroll[1]))
 
-            self.players[0].update(self.tilemap, movement=(self.movement[0][1] - self.movement[0][0], 0))
-            self.players[1].update(self.tilemap, movement=(self.movement[1][1] - self.movement[1][0], 0))
-            # ==================== END UPDATE ==================== #
-
-
-            # ==================== START RENDER ==================== #
+            # Background
             self.display.blit(pygame.transform.scale(self.assets['bg'], self.display.get_size()), (0, 0))
 
+            # Tilemap
             self.tilemap.render(self.display, offset=render_scroll)
+
+            # Player
+            self.players[0].update(self.tilemap, movement=(self.movement[0][1] - self.movement[0][0], 0),
+                                   delta_time=self.delta_time)
+            self.players[1].update(self.tilemap, movement=(self.movement[1][1] - self.movement[1][0], 0),
+                                   delta_time=self.delta_time)
             self.players[0].render(self.display, offset=render_scroll)
             self.players[1].render(self.display, offset=render_scroll)
 
+            # Timer
             self.timer.render(self.display, (20, 20))
 
-            self.screen.blit(pygame.transform.scale(self.display, self.screen.get_size()), ((random() * self.screenshake - self.screenshake / 2), (random() * self.screenshake - self.screenshake / 2)))
-
+            # Display
+            self.screen.blit(pygame.transform.scale(self.display, self.screen.get_size()), (
+            (random() * self.screenshake - self.screenshake / 2), (random() * self.screenshake - self.screenshake / 2)))
             pygame.display.update()
-            self.clock.tick(self.fps)
-            # ==================== END RENDER ==================== #
+            self.clock.tick(FPS)

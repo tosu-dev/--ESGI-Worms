@@ -22,9 +22,9 @@ class PhysicsEntity:
             self.action = action
             self.animation = self.game.assets[self.type + '/' + self.action].copy()
 
-    def update(self, tilemap, movement=(0, 0)):
+    def update(self, tilemap, movement=(0, 0), delta_time=1):
         self.collisions = {'top': False, 'bottom': False, 'left': False, 'right': False}
-        frame_movement = ((movement[0]+self.velocity[0]) * 0.3, (movement[1]+self.velocity[1]))
+        frame_movement = ((movement[0]+self.velocity[0]) * 0.3 * delta_time, (movement[1]+self.velocity[1]) * delta_time)
 
         self.pos[0] += frame_movement[0]
         entity_rect = self.rect()
@@ -60,9 +60,9 @@ class PhysicsEntity:
         if self.collisions['top'] or self.collisions['bottom']:
             self.velocity[1] = 0
 
-        self.animation.update()
+        self.animation.update(delta_time=delta_time)
 
-    def render(self, surf, offset=[0, 0]):
+    def render(self, surf, offset=(0, 0)):
         pos = (self.pos[0]-offset[0]+self.anim_offset[0], self.pos[1]-offset[1]+self.anim_offset[1])
         if self.outline:
             entity_mask = mask.from_surface(transform.flip(self.animation.img(), self.flip, False))
