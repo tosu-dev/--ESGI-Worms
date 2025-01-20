@@ -138,7 +138,7 @@ class Game:
                     if event.key == pygame.K_RIGHT:
                         self.movement[self.player_turn][1] = True
                     if event.key == pygame.K_UP:
-                        self.players[self.player_turn].start_charge_jump()
+                        self.players[self.player_turn].charge_jump()
 
                 if event.type == pygame.KEYUP:
                     if event.key == pygame.K_LEFT:
@@ -150,7 +150,15 @@ class Game:
 
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if event.button == 1:
+                        self.players[self.player_turn].charge_shoot()
+
+                if event.type == pygame.MOUSEBUTTONUP:
+                    if event.button == 1:
                         self.players[self.player_turn].shoot()
+
+                if event.type == pygame.MOUSEWHEEL:
+                    self.players[self.player_turn].weapon += event.y
+                    self.players[self.player_turn].weapon %= 2
 
             # ==================== END EVENT ==================== #
 

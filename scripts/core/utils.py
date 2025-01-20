@@ -12,6 +12,9 @@ SFX_PATH = 'data/sfx/'
 
 DEBUG_FONT = font.SysFont('Arial', 24)
 
+def pg_debug(surface, value, pos=(0, 0), color=(0, 0, 0)):
+    text_surface = DEBUG_FONT.render(value, True, color)
+    surface.blit(text_surface, pos)
 
 def load_image(path):
     img = image.load(IMG_PATH + path).convert()
@@ -39,14 +42,12 @@ def play_sfx(sfx):
     sfx.stop()
     sfx.play()
 
-def pg_debug(surface, value, pos=(0, 0), color=(0, 0, 0)):
-    text_surface = DEBUG_FONT.render(value, False, color)
-    surface.blit(text_surface, pos)
+def add_points(point1, point2, sub=False):
+    """ Calculate a position with or without an offset """
+    if not sub:
+        return point1[0] + point2[0], point1[1] + point2[1]
+    return point1[0] - point2[0], point1[1] - point2[1]
 
-def position_with_offset(pos, offset, add=False):
-    if add:
-        return pos[0] + offset[0], pos[1] + offset[1]
-    return pos[0] - offset[0], pos[1] - offset[1]
-
-def position_to_int(pos):
-    return [int(pos[0]), int(pos[1])]
+def point_to_int(point):
+    """ Convert position to int position"""
+    return [int(point[0]), int(point[1])]
