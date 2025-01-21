@@ -102,11 +102,15 @@ class Player(PhysicsEntity):
             mouse_pos = add_points(self.game.mouse_pos, self.game.scroll)
             pos = add_points(self.pos, self.shoot_offset)
 
+            trajectory = []
             if self.weapon == 0:
-                rocket_trajectory = Rocket.calculate_trajectory(self.game.tilemap, point_to_int(pos), mouse_pos, FPS)
-                for point in rocket_trajectory:
-                    pygame.draw.circle(surf, (255, 255, 255), add_points(point, self.game.scroll, sub=True), 2)
+                trajectory = Rocket.calculate_trajectory(self.game.tilemap, point_to_int(pos), mouse_pos, FPS)
             elif self.weapon == 1:
-                grenade_trajectory = Grenade.calculate_trajectory(self.game.tilemap, point_to_int(pos), mouse_pos, FPS)
-                for point in grenade_trajectory:
-                    pygame.draw.circle(surf, (255, 255, 255), add_points(point, self.game.scroll, sub=True), 2)
+                trajectory = Grenade.calculate_trajectory(self.game.tilemap, point_to_int(pos), mouse_pos, FPS)
+
+            radius = 5
+            n = len(trajectory)
+            print(n)
+            for i, point in enumerate(trajectory):
+                radius = max(2, radius * 0.95)
+                pygame.draw.circle(surf, (255, 255, 255), add_points(point, self.game.scroll, sub=True), radius)

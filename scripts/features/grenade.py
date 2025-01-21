@@ -34,30 +34,75 @@ class Grenade:
 
     @classmethod
     def calculate_trajectory(cls, tilemap, player_pos, mouse_pos, fps):
+        cto = 3  # collide trigger offset
         vector = add_points(player_pos, mouse_pos, sub=True)
         angle = atan2(-vector[1], vector[0])
         if angle < 0:
             angle += 2 * pi
         force = min(sqrt(vector[0] ** 2 + vector[1] ** 2), cls.max_force)
-
-        vel_x = force * cos(angle)
-        vel_y = -force * sin(angle)
+        start_pos = list(player_pos)
 
         point_timer = 0.2
         time = 0
+        timer = 0
         trajectory = []
-        while time < 5:
+        pos = list(start_pos)
+
+        while timer <= 5:
+            vel_x = force * cos(angle)
+            vel_y = -force * sin(angle)
+
             time += 1 / fps
+            timer += 1 / fps
             point_timer -= 1 / fps
+
+            old_pos = list(pos)
+            pos[0] = start_pos[0] + vel_x * time
+            pos[1] = start_pos[1] + (vel_y * time) + (
+                    0.5 * 9.8 * cls.mass * time ** 2)
+
+            v = [pos[0] - old_pos[0], pos[1] - old_pos[1]]
+            collision_pos = {}
+            collided = False
+            if v[0] < 0:
+                collision_pos["left"] = [pos[0] - cto, pos[1]]
+            elif v[0] > 0:
+                collision_pos["right"] = [pos[0] + cto, pos[1]]
+            if v[1] > 0:
+                collision_pos["bottom"] = [pos[0], pos[1] + cto]
+            elif v[1] < 0:
+                collision_pos["top"] = [pos[0], pos[1] - cto]
+
+            # Check collision
+            for p in collision_pos:
+                if tilemap.is_pos_in_tile(collision_pos[p]):
+                    collided = True
+                    if p == "left":
+                        vel_x = abs(vel_x)
+                        if v[1] > 0:
+                            vel_y = abs(vel_y)
+                    elif p == "right":
+                        vel_x = -abs(vel_x)
+                        if v[1] > 0:
+                            vel_y = abs(vel_y)
+
+                    if p == "top":
+                        vel_y = abs(vel_y)
+                    elif p == "bottom":
+                        pos[1] -= 1  # Avoid dancing on the floor
+                        vel_y = -abs(vel_y)
+
+            if collided:
+                start_pos = list(pos)
+                force *= 0.6
+                time = 0
+                angle = atan2(-vel_y, vel_x)
+                if angle < 0:
+                    angle += 2 * pi
+
             if point_timer <= 0:
                 point_timer = 0.2
-                pos = [0, 0]
-                pos[0] = player_pos[0] + vel_x * time
-                pos[1] = player_pos[1] + (vel_y * time) + (
-                        0.5 * 9.8 * cls.mass * time ** 2)
-                if tilemap.is_pos_in_tile(pos):
-                    break
-                trajectory.append(pos)
+                trajectory.append(list(pos))
 
         return trajectory
 
@@ -93,7 +138,6 @@ class Grenade:
 
         # Vector between new and old position
         v = [self.pos[0] - self.old_pos[0], self.pos[1] - self.old_pos[1]]
-
 
         # Compute collision possibility horizontaly and verticaly
         pos = list(self.pos)
@@ -138,7 +182,6 @@ class Grenade:
             if self.angle < 0:
                 self.angle += 2 * pi
             self.rotation_force = int(15 * (self.force / 150))
-
 
     def render(self, surf, offset):
         img = self.image.copy()

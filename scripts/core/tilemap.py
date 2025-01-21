@@ -64,8 +64,7 @@ class TileMap:
             y = int(start_pos[1] + t * (end_pos[1] - start_pos[1]) / steps)
             touched = self.is_pos_in_tile((x, y), physics=physics)
             if touched:
-                break
-        return touched
+                return x, y
 
     def get_tile(self, pos):
         tile_loc = (int(pos[0] // self.tile_size), int(pos[1] // self.tile_size))
