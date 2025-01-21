@@ -3,7 +3,6 @@
 # TODO : Rocket smoke while moving
 # TODO : Explosion particule
 # TODO : Sound
-# TODO : Rocket and grenade asset
 # TODO : Weapon selector
 
 import math
@@ -45,6 +44,8 @@ class Game:
         self.fps = FPS
         self.delta_time = 0
 
+        self.weapon_overlay = pygame.Surface((64, 64))
+
         self.assets = {
             'bg': load_image('background.png'),
             'projectile': load_image('projectile.png'),
@@ -58,6 +59,10 @@ class Game:
             'player/idle': Animation(load_images('entities/player/idle'), 6),
             'player/run': Animation(load_images('entities/player/run'), 4),
             'player/jump': Animation(load_images('entities/player/jump')),
+
+            'rocket': load_image('weapons/rocket.png'),
+            'grenade': load_image('weapons/grenade.png'),
+            'weapon_frame_border': load_image('overlays/frame_border.png'),
         }
 
         self.musics = {
@@ -208,10 +213,18 @@ class Game:
             self.timer.render(self.display, (20, 20))
 
             # Weapon type
+            self.weapon_overlay.fill((0, 0, 0))
             if self.players[self.player_turn].weapon == 0:
-                pg_debug(self.display, "ROCKET", (10, 440))
+                weapon_img = self.assets["rocket"]
             elif self.players[self.player_turn].weapon == 1:
-                pg_debug(self.display, "GRENADE", (10, 440))
+                weapon_img = self.assets["grenade"]
+            else:
+                weapon_img = self.assets["rocket"]
+            self.weapon_overlay.blit(pygame.transform.scale(weapon_img, (32, 32)), (16, 16))
+            self.weapon_overlay.blit(self.assets["weapon_frame_border"], (0, 0))
+
+
+            self.display.blit(self.weapon_overlay, (10, 406))
 
             # Display
             self.screen.blit(pygame.transform.scale(self.display, self.screen.get_size()), (
