@@ -110,13 +110,13 @@ class Game:
         self.scroll[1] = self.players[self.player_turn].rect().centery - self.display.get_height() / 2
 
     def damage_player(self, pos, radius=1):
-        other_player = self.players[(self.player_turn + 1) % 2]
-        v = (other_player.pos[0] - pos[0]), (other_player.pos[1] - pos[1])
-        r = radius * self.tilemap.tile_size
-        if v[0] ** 2 + v[1] ** 2 <= r ** 2:
-            l = math.sqrt(v[0]**2 + v[1]**2)
-            ratio = l / r
-            other_player.health -= self.projectile.damage * ratio
+        for player in self.players:
+            v = (player.pos[0] - pos[0]), (player.pos[1] - pos[1])
+            r = radius * self.tilemap.tile_size
+            if v[0] ** 2 + v[1] ** 2 <= r ** 2:
+                l = math.sqrt(v[0]**2 + v[1]**2)
+                ratio = 1 - (l / r)
+                player.health -= self.projectile.damage * ratio
 
     def run(self):
         prev_time = time()
@@ -137,14 +137,14 @@ class Game:
             # Camera
             if self.projectile:
                 self.scroll[0] += (self.projectile.pos[0] - self.display.get_width() / 2 -
-                                   self.scroll[0]) / 30
+                                   self.scroll[0]) / 10
                 self.scroll[1] += (self.projectile.pos[1] - self.display.get_height() / 2 -
-                                   self.scroll[1]) / 30
+                                   self.scroll[1]) / 10
             else:
                 self.scroll[0] += (self.players[self.player_turn].rect().centerx - self.display.get_width() / 2 -
-                                   self.scroll[0]) / 30
+                                   self.scroll[0]) / 10
                 self.scroll[1] += (self.players[self.player_turn].rect().centery - self.display.get_height() / 2 -
-                                   self.scroll[1]) / 30
+                                   self.scroll[1]) / 10
             render_scroll = (int(self.scroll[0]), int(self.scroll[1]))
 
             # ==================== START EVENT ==================== #
@@ -222,7 +222,6 @@ class Game:
                 weapon_img = self.assets["rocket"]
             self.weapon_overlay.blit(pygame.transform.scale(weapon_img, (32, 32)), (16, 16))
             self.weapon_overlay.blit(self.assets["weapon_frame_border"], (0, 0))
-
 
             self.display.blit(self.weapon_overlay, (10, 406))
 
