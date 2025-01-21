@@ -1,5 +1,11 @@
 # TODO : Framerate independant gravity
-from math import cos, sin
+# TODO : Projectile damage base of distance
+# TODO : Can't interact while projectile and change player turn when end of projectile (pause then change)
+# TODO : Rocket smoke while moving
+# TODO : Explosion particule
+# TODO : Sound
+# TODO : Rocket and grenade asset
+# TODO : Weapon selector
 
 import pygame
 import sys
@@ -7,7 +13,6 @@ from time import time
 from random import random
 
 from scripts.core.animation import Animation
-from scripts.core.colors import *
 from scripts.core.constants import *
 from scripts.core.utils import *
 from scripts.entities.player import Player
@@ -32,7 +37,7 @@ class Game:
         pygame.font.init()
 
         pygame.display.set_caption('Worms')
-        self.render_scale = 1
+        self.render_scale = 1.5
         self.screen = pygame.display.set_mode(SCREEN_SIZE)
         self.display = pygame.Surface((SCREEN_SIZE[0] // self.render_scale, SCREEN_SIZE[1] // self.render_scale))
         self.clock = pygame.time.Clock()
@@ -70,6 +75,7 @@ class Game:
             Player(self, (0, 0), (8, 15)),
             Player(self, (0, 0), (8, 15)),
         ]
+        self.projectile = None
 
         self.mouse_pos = [0, 0]
 
@@ -110,13 +116,21 @@ class Game:
             prev_time = time()
 
             # Get mouse pos
-            self.mouse_pos = pygame.mouse.get_pos()
+            self.mouse_pos = list(pygame.mouse.get_pos())
+            self.mouse_pos[0] //= self.render_scale
+            self.mouse_pos[1] //= self.render_scale
 
             # Camera
-            self.scroll[0] += (self.players[self.player_turn].rect().centerx - self.display.get_width() / 2 -
-                               self.scroll[0]) / 30
-            self.scroll[1] += (self.players[self.player_turn].rect().centery - self.display.get_height() / 2 -
-                               self.scroll[1]) / 30
+            if self.projectile:
+                self.scroll[0] += (self.projectile.pos[0] - self.display.get_width() / 2 -
+                                   self.scroll[0]) / 30
+                self.scroll[1] += (self.projectile.pos[1] - self.display.get_height() / 2 -
+                                   self.scroll[1]) / 30
+            else:
+                self.scroll[0] += (self.players[self.player_turn].rect().centerx - self.display.get_width() / 2 -
+                                   self.scroll[0]) / 30
+                self.scroll[1] += (self.players[self.player_turn].rect().centery - self.display.get_height() / 2 -
+                                   self.scroll[1]) / 30
             render_scroll = (int(self.scroll[0]), int(self.scroll[1]))
 
             # ==================== START EVENT ==================== #
@@ -174,10 +188,21 @@ class Game:
             self.players[1].update(self.tilemap, movement=(self.movement[1][1] - self.movement[1][0], 0),
                                    delta_time=self.delta_time)
             self.players[0].render(self.display, offset=render_scroll)
-            #self.players[1].render(self.display, mouse_pos=mouse_pos, offset=render_scroll)
+            self.players[1].render(self.display, offset=render_scroll)
+
+            # Projectile
+            if self.projectile:
+                self.projectile.render(self.display, offset=render_scroll)
+                self.projectile.update(fps=FPS)
 
             # Timer
             self.timer.render(self.display, (20, 20))
+
+            # Weapon type
+            if self.players[self.player_turn].weapon == 0:
+                pg_debug(self.display, "ROCKET", (10, 440))
+            elif self.players[self.player_turn].weapon == 1:
+                pg_debug(self.display, "GRENADE", (10, 440))
 
             # Display
             self.screen.blit(pygame.transform.scale(self.display, self.screen.get_size()), (

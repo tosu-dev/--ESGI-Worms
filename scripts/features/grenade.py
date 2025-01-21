@@ -6,6 +6,8 @@ from scripts.core.utils import load_image, add_points
 class Grenade:
 
     mass = 20
+    max_force = 150
+    damage = 50
 
     def __init__(self, pos, angle, force, game):
         self.start_pos = list(pos)
@@ -25,7 +27,7 @@ class Grenade:
         angle = atan2(-vector[1], vector[0])
         if angle < 0:
             angle += 2 * pi
-        force = min(sqrt(vector[0] ** 2 + vector[1] ** 2), 200)
+        force = min(sqrt(vector[0] ** 2 + vector[1] ** 2), cls.max_force)
         return Grenade(player_pos, angle, force, game)
 
     @classmethod
@@ -34,7 +36,7 @@ class Grenade:
         angle = atan2(-vector[1], vector[0])
         if angle < 0:
             angle += 2 * pi
-        force = min(sqrt(vector[0] ** 2 + vector[1] ** 2), 200)
+        force = min(sqrt(vector[0] ** 2 + vector[1] ** 2), cls.max_force)
 
         vel_x = force * cos(angle)
         vel_y = -force * sin(angle)
@@ -65,6 +67,7 @@ class Grenade:
         # Grenade life timer
         self.timer -= 1 / fps
         if self.timer <= 0:
+            self.game.tilemap.remove_tiles_around(self.pos, radius=4)
             self.game.projectile = None
 
         # Time
@@ -103,27 +106,24 @@ class Grenade:
                 # If horizontaly, make sure to take the absolute value of vel_y if falling
                 # because of new angle 'atan2(-vel_y, vel_x)'
                 if p == "left":
-                    self.pos[0] += cto
                     vel_x = abs(vel_x)
                     if v[1] > 0:
                         vel_y = abs(vel_y)
                 elif p == "right":
-                    self.pos[0] -= cto
                     vel_x = -abs(vel_x)
                     if v[1] > 0:
                         vel_y = abs(vel_y)
 
                 if p == "top":
-                    self.pos[1] += cto
                     vel_y = abs(vel_y)
                 elif p == "bottom":
-                    self.pos[1] -= cto
+                    self.pos[1] -= 1  # Avoid dancing on the floor
                     vel_y = -abs(vel_y)
 
         # If collided, compute new trajectory
         if collided:
             self.start_pos = list(self.pos)
-            self.force *= 0.7
+            self.force *= 0.6
             self.time = 0
             self.angle = atan2(-vel_y, vel_x)
             if self.angle < 0:

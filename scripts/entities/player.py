@@ -3,10 +3,9 @@ import pygame
 from scripts.core.constants import FPS
 from scripts.core.utils import SFX_PATH, play_sfx, add_points, point_to_int, pg_debug
 from scripts.entities.physics_entity import PhysicsEntity
-from math import atan2, degrees, sqrt, pi
 
-from scripts.features.grenade import Grenades, Grenade
-from scripts.features.rocket import Rocket, Rockets
+from scripts.features.grenade import Grenade
+from scripts.features.rocket import Rocket
 
 
 class Player(PhysicsEntity):
@@ -17,8 +16,6 @@ class Player(PhysicsEntity):
         self.max_jumps = 1
         self.charge_jumping = False
         self.jump_force = 1.5
-        self.rockets = Rockets(self.game)
-        self.grenades = Grenades(self.game)
 
         self.jump_sound = pygame.mixer.Sound(SFX_PATH + 'jump.wav')
         self.jump_sound.set_volume(0.7)
@@ -27,6 +24,7 @@ class Player(PhysicsEntity):
         self.shoot_offset = [10, 10]
 
         self.weapon = 0
+        self.health = 100
 
     def charge_jump(self):
         if self.jumps > 0:
@@ -52,9 +50,9 @@ class Player(PhysicsEntity):
             mouse_pos = add_points(self.game.mouse_pos, self.game.scroll)
             pos = add_points(self.pos, self.shoot_offset)
             if self.weapon == 0:
-                self.rockets.add_rocket(pos, mouse_pos)
+                self.game.projectile = Rocket.create(pos, mouse_pos, self.game)
             elif self.weapon == 1:
-                self.grenades.add_grenade(pos, mouse_pos)
+                self.game.projectile = Grenade.create(pos, mouse_pos, self.game)
 
     def update(self, tilemap, movement=(0, 0), delta_time=1):
         # Charge jump
@@ -89,14 +87,15 @@ class Player(PhysicsEntity):
         else:
             self.velocity[0] = min(self.velocity[0] + 0.1, 0)
 
-        # Rockets
-        self.rockets.update(FPS)
-
-        # Grenades
-        self.grenades.update(FPS)
-
     def render(self, surf, offset=(0, 0)):
         super().render(surf, offset)
+
+        # Health bar
+        player_render_pos = self.get_render_pos(offset)
+        healthbar_pos = (player_render_pos[0] - 3, player_render_pos[1] - 5)
+        healthbar_width = 20
+        pygame.draw.rect(surf, (255, 0, 0), (healthbar_pos, (healthbar_width, 2)))
+        pygame.draw.rect(surf, (0, 255, 0), (healthbar_pos, (self.health / 100 * healthbar_width, 2)))
 
         # Rocket trajectory
         if self.charge_shooting:
@@ -111,15 +110,3 @@ class Player(PhysicsEntity):
                 grenade_trajectory = Grenade.calculate_trajectory(self.game.tilemap, point_to_int(pos), mouse_pos, FPS)
                 for point in grenade_trajectory:
                     pygame.draw.circle(surf, (255, 255, 255), add_points(point, self.game.scroll, sub=True), 2)
-
-        # Rockets
-        self.rockets.render(surf, offset)
-
-        # Grenades
-        self.grenades.render(surf, offset)
-
-        # Weapon type
-        if self.weapon == 0:
-            pg_debug(surf, "ROCKET", (10, 440))
-        elif self.weapon == 1:
-            pg_debug(surf, "GRENADE", (10, 440))

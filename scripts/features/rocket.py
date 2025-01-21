@@ -6,24 +6,27 @@ from scripts.core.utils import load_image, add_points
 
 class Rocket:
 
-    mass = 5
+    mass = 10
+    max_force = 300
+    damage = 30
 
-    def __init__(self, pos, angle, force):
+    def __init__(self, pos, angle, force, game):
         self.start_pos = list(pos)
         self.angle = angle
         self.force = force
         self.time = 0
         self.pos = list(pos)
         self.image = load_image('projectile.png')
+        self.game = game
 
     @classmethod
-    def create(cls, player_pos, mouse_pos):
+    def create(cls, player_pos, mouse_pos, game):
         vector = add_points(player_pos, mouse_pos, sub=True)
         angle = atan2(-vector[1], vector[0])
         if angle < 0:
             angle += 2 * pi
-        force = min(sqrt(vector[0] ** 2 + vector[1] ** 2), 200)
-        return Rocket(player_pos, angle, force)
+        force = min(sqrt(vector[0] ** 2 + vector[1] ** 2), cls.max_force)
+        return Rocket(player_pos, angle, force, game)
 
     @classmethod
     def calculate_trajectory(cls, tilemap, player_pos, mouse_pos, fps):
@@ -31,7 +34,7 @@ class Rocket:
         angle = atan2(-vector[1], vector[0])
         if angle < 0:
             angle += 2 * pi
-        force = min(sqrt(vector[0] ** 2 + vector[1] ** 2), 200)
+        force = min(sqrt(vector[0] ** 2 + vector[1] ** 2), cls.max_force)
 
         vel_x = force * cos(angle)
         vel_y = -force * sin(angle)
@@ -48,6 +51,7 @@ class Rocket:
                 pos[0] = player_pos[0] + vel_x * time
                 pos[1] = player_pos[1] + (vel_y * time) + (
                         0.5 * 9.8 * cls.mass * time ** 2)
+                # TODO : Vérifier si il y a une tile dans le segment entre ce point et le point d'avant
                 if tilemap.is_pos_in_tile(pos):
                     break
                 trajectory.append(pos)
@@ -62,6 +66,10 @@ class Rocket:
         self.pos[0] = self.start_pos[0] + vel_x * self.time
         self.pos[1] = self.start_pos[1] + (vel_y * self.time) + (
                 0.5 * 9.8 * self.mass * self.time ** 2)
+
+        if self.game.tilemap.is_pos_in_tile(self.pos):
+            self.game.tilemap.remove_tiles_around(self.pos, radius=2)
+            self.game.projectile = None
 
     def render(self, surf, offset):
         surf.blit(self.image, (self.pos[0] - offset[0] - self.image.get_width() / 2,
