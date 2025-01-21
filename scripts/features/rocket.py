@@ -69,6 +69,7 @@ class Rocket:
 
         if self.game.tilemap.is_pos_in_tile(self.pos):
             self.game.tilemap.remove_tiles_around(self.pos, radius=2)
+            self.game.damage_player(self.pos, radius=3)
             self.game.projectile = None
 
     def render(self, surf, offset):

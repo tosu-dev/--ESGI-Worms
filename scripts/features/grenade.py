@@ -68,6 +68,7 @@ class Grenade:
         self.timer -= 1 / fps
         if self.timer <= 0:
             self.game.tilemap.remove_tiles_around(self.pos, radius=4)
+            self.game.damage_player(self.pos, radius=5)
             self.game.projectile = None
 
         # Time

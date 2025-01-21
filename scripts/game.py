@@ -1,5 +1,4 @@
 # TODO : Framerate independant gravity
-# TODO : Projectile damage base of distance
 # TODO : Can't interact while projectile and change player turn when end of projectile (pause then change)
 # TODO : Rocket smoke while moving
 # TODO : Explosion particule
@@ -7,6 +6,7 @@
 # TODO : Rocket and grenade asset
 # TODO : Weapon selector
 
+import math
 import pygame
 import sys
 from time import time
@@ -103,6 +103,15 @@ class Game:
 
         self.scroll[0] = self.players[self.player_turn].rect().centerx - self.display.get_width() / 2
         self.scroll[1] = self.players[self.player_turn].rect().centery - self.display.get_height() / 2
+
+    def damage_player(self, pos, radius=1):
+        other_player = self.players[(self.player_turn + 1) % 2]
+        v = (other_player.pos[0] - pos[0]), (other_player.pos[1] - pos[1])
+        r = radius * self.tilemap.tile_size
+        if v[0] ** 2 + v[1] ** 2 <= r ** 2:
+            l = math.sqrt(v[0]**2 + v[1]**2)
+            ratio = l / r
+            other_player.health -= self.projectile.damage * ratio
 
     def run(self):
         prev_time = time()
