@@ -16,7 +16,9 @@ class Grenade:
         self.time = 0
         self.old_pos = list(pos)
         self.pos = list(pos)
-        self.image = load_image('projectile.png')
+        self.image = load_image('weapons/grenade.png')
+        self.rotation = 0
+        self.rotation_force = int(15 * (self.force / 150))
         self.timer = 5
         self.collisions = {'top': False, 'bottom': False, 'left': False, 'right': False}
         self.game = game
@@ -63,6 +65,12 @@ class Grenade:
         cto = 3  # collide trigger offset
         vel_x = self.force * cos(self.angle)
         vel_y = -self.force * sin(self.angle)
+
+        if vel_x >= 0:
+            self.rotation -= self.rotation_force
+        else:
+            self.rotation += self.rotation_force
+        self.rotation %= 360
 
         # Grenade life timer
         self.timer -= 1 / fps
@@ -129,10 +137,13 @@ class Grenade:
             self.angle = atan2(-vel_y, vel_x)
             if self.angle < 0:
                 self.angle += 2 * pi
+            self.rotation_force = int(15 * (self.force / 150))
 
 
     def render(self, surf, offset):
-        surf.blit(self.image, (self.pos[0] - offset[0] - self.image.get_width() / 2,
+        img = self.image.copy()
+        img = pygame.transform.rotate(img, self.rotation)
+        surf.blit(img, (self.pos[0] - offset[0] - self.image.get_width() / 2,
                                self.pos[1] - offset[1] - self.image.get_height() / 2))
 
 class Grenades:

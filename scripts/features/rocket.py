@@ -1,3 +1,5 @@
+import math
+
 import pygame
 from math import pi, atan2, sqrt, cos, sin
 
@@ -15,8 +17,10 @@ class Rocket:
         self.angle = angle
         self.force = force
         self.time = 0
+        self.old_pos = list(pos)
         self.pos = list(pos)
-        self.image = load_image('projectile.png')
+        self.image = load_image('weapons/rocket.png')
+        self.rotation = 0
         self.game = game
 
     @classmethod
@@ -63,9 +67,17 @@ class Rocket:
         vel_y = -self.force * sin(self.angle)
 
         self.time += 1 / fps
+        self.old_pos[0] = self.pos[0]
+        self.old_pos[1] = self.pos[1]
         self.pos[0] = self.start_pos[0] + vel_x * self.time
         self.pos[1] = self.start_pos[1] + (vel_y * self.time) + (
                 0.5 * 9.8 * self.mass * self.time ** 2)
+
+        v = [self.pos[0] - self.old_pos[0], self.pos[1] - self.old_pos[1]]
+
+        self.rotation = math.degrees(atan2(-v[1], v[0]))
+        if self.rotation < 0:
+            self.rotation += 360
 
         if self.game.tilemap.is_pos_in_tile(self.pos):
             self.game.tilemap.remove_tiles_around(self.pos, radius=2)
@@ -73,7 +85,9 @@ class Rocket:
             self.game.projectile = None
 
     def render(self, surf, offset):
-        surf.blit(self.image, (self.pos[0] - offset[0] - self.image.get_width() / 2,
+        img = self.image.copy()
+        img = pygame.transform.rotate(img, self.rotation)
+        surf.blit(img, (self.pos[0] - offset[0] - self.image.get_width() / 2,
                                self.pos[1] - offset[1] - self.image.get_height() / 2))
 
 class Rockets:
