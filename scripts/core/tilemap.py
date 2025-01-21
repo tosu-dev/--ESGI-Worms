@@ -56,6 +56,17 @@ class TileMap:
             return loc in self.tilemap and self.tilemap[loc]['type'] in PHYSICS_TILES
         return loc in self.tilemap
 
+    def line_touch_tile(self, start_pos, end_pos, physics=True):
+        touched = False
+        steps = 100
+        for t in range(steps + 1):
+            x = int(start_pos[0] + t * (end_pos[0] - start_pos[0]) / steps)
+            y = int(start_pos[1] + t * (end_pos[1] - start_pos[1]) / steps)
+            touched = self.is_pos_in_tile((x, y), physics=physics)
+            if touched:
+                break
+        return touched
+
     def get_tile(self, pos):
         tile_loc = (int(pos[0] // self.tile_size), int(pos[1] // self.tile_size))
         loc = str(tile_loc[0]) + ';' + str(tile_loc[1])

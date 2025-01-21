@@ -51,9 +51,9 @@ class Rocket:
                 pos[0] = player_pos[0] + vel_x * time
                 pos[1] = player_pos[1] + (vel_y * time) + (
                         0.5 * 9.8 * cls.mass * time ** 2)
-                # TODO : Vérifier si il y a une tile dans le segment entre ce point et le point d'avant
-                if tilemap.is_pos_in_tile(pos):
-                    break
+                if len(trajectory) >= 2:
+                    if tilemap.line_touch_tile((trajectory[-1][0], trajectory[-1][1]), (pos[0], pos[1])):
+                        break
                 trajectory.append(pos)
 
         return trajectory
