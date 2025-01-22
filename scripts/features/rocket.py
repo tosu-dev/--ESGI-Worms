@@ -1,9 +1,11 @@
 import math
+import random
 
 import pygame
 from math import pi, atan2, sqrt, cos, sin
 
 from scripts.core.utils import load_image, add_points
+from scripts.core.particle import Particle
 
 
 class Rocket:
@@ -21,6 +23,7 @@ class Rocket:
         self.pos = list(pos)
         self.image = load_image('weapons/rocket.png')
         self.rotation = 0
+        self.particles = []
         self.game = game
 
     @classmethod
@@ -45,20 +48,25 @@ class Rocket:
 
         point_timer = 0.2
         time = 0
+        pos = list(player_pos)
         trajectory = []
         while time < 10:
             time += 1 / fps
             point_timer -= 1 / fps
             if point_timer <= 0:
                 point_timer = 0.2
-                pos = [0, 0]
+
+                old_pos = list(pos)
                 pos[0] = player_pos[0] + vel_x * time
                 pos[1] = player_pos[1] + (vel_y * time) + (
                         0.5 * 9.8 * cls.mass * time ** 2)
-                if len(trajectory) >= 2:
-                    if tilemap.line_touch_tile((trajectory[-1][0], trajectory[-1][1]), (pos[0], pos[1])):
-                        break
-                trajectory.append(pos)
+
+                point = tilemap.line_touch_tile((old_pos[0], old_pos[1]), (pos[0], pos[1]))
+                if point:
+                    trajectory.append(list(point))
+                    break
+
+                trajectory.append(list(pos))
 
         return trajectory
 
@@ -82,6 +90,12 @@ class Rocket:
         if self.game.tilemap.is_pos_in_tile(self.pos):
             self.game.tilemap.remove_tiles_around(self.pos, radius=2)
             self.game.damage_player(self.pos, radius=3)
+            self.game.change_player_transition()
+            for _ in range(50):
+                r = 2
+                vx = random.uniform(-r, r)
+                vy = random.uniform(-r, r)
+                self.game.particles.append(Particle(self.game, "particle", (self.pos[0], self.pos[1]), (vx, vy)))
             self.game.projectile = None
 
     def render(self, surf, offset):
@@ -89,6 +103,9 @@ class Rocket:
         img = pygame.transform.rotate(img, self.rotation)
         surf.blit(img, (self.pos[0] - offset[0] - self.image.get_width() / 2,
                                self.pos[1] - offset[1] - self.image.get_height() / 2))
+
+        for particule in self.particles:
+            particule.render(surf, offset)
 
 class Rockets:
 

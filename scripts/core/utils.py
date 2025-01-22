@@ -11,10 +11,17 @@ MUSIC_PATH = 'data/musics/'
 SFX_PATH = 'data/sfx/'
 
 DEBUG_FONT = font.SysFont('Arial', 24)
+WINNER_FONT = font.SysFont('Arial', 64)
 
-def pg_debug(surface, value, pos=(0, 0), color=(0, 0, 0)):
-    text_surface = DEBUG_FONT.render(value, True, color)
-    surface.blit(text_surface, pos)
+def show_text(surface, value, pos=(0, 0), color=(0, 0, 0), center=False, font=DEBUG_FONT):
+    text_surface = font.render(value, True, color)
+    if center:
+        width = text_surface.get_width()
+        height = text_surface.get_height()
+        surface.blit(text_surface, (pos[0] - width // 2, pos[1] - height // 2))
+    else:
+        surface.blit(text_surface, pos)
+
 
 def load_image(path):
     img = image.load(IMG_PATH + path).convert()

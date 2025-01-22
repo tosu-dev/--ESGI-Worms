@@ -1,10 +1,11 @@
 from pygame import transform, Rect, mask
 
-from scripts.core.utils import pg_debug
+from scripts.core.utils import show_text
 
 
 class PhysicsEntity:
-    def __init__(self, game, e_type, pos, size, outline=None):
+    def __init__(self, game, e_type, number, pos, size, outline=None):
+        self.number = number
         self.game = game
         self.type = e_type
         self.pos = list(pos)
@@ -17,18 +18,20 @@ class PhysicsEntity:
         self.set_action('idle')
         self.outline = outline
 
-
     def rect(self):
         return Rect(self.pos[0], self.pos[1], self.size[0], self.size[1])
     
     def set_action(self, action: str):
         if action != self.action:
             self.action = action
-            self.animation = self.game.assets[self.type + '/' + self.action].copy()
+            if self.number != None:
+                self.animation = self.game.assets[self.type + str(self.number) + '/' + self.action].copy()
+            else:
+                self.animation = self.game.assets[self.type + '/' + self.action].copy()
 
     def update(self, tilemap, movement=(0, 0), delta_time=1):
         self.collisions = {'top': False, 'bottom': False, 'left': False, 'right': False}
-        frame_movement = ((movement[0]+self.velocity[0]) * 0.5 * delta_time, (movement[1]+self.velocity[1]) * delta_time)
+        frame_movement = ((movement[0]+self.velocity[0]) * 0.6 * delta_time, (movement[1]+self.velocity[1]) * delta_time)
 
         self.pos[0] += frame_movement[0]
         entity_rect = self.rect()
@@ -59,7 +62,7 @@ class PhysicsEntity:
         if movement[0] < 0:
             self.flip = True
 
-        self.velocity[1] = min(3, self.velocity[1] + 0.1)
+        self.velocity[1] = min(8, self.velocity[1] + 0.1)
 
         if self.collisions['top'] or self.collisions['bottom']:
             self.velocity[1] = 0

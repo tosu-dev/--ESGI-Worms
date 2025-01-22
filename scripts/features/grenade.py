@@ -1,5 +1,9 @@
+import random
+
 import pygame
 from math import pi, atan2, sqrt, cos, sin
+
+from scripts.core.particle import Particle
 from scripts.core.utils import load_image, add_points
 
 
@@ -19,7 +23,7 @@ class Grenade:
         self.image = load_image('weapons/grenade.png')
         self.rotation = 0
         self.rotation_force = int(15 * (self.force / 150))
-        self.timer = 5
+        self.timer = 4
         self.collisions = {'top': False, 'bottom': False, 'left': False, 'right': False}
         self.game = game
 
@@ -42,18 +46,19 @@ class Grenade:
         force = min(sqrt(vector[0] ** 2 + vector[1] ** 2), cls.max_force)
         start_pos = list(player_pos)
 
+        max_point_timer = 0.2
         point_timer = 0.2
         time = 0
-        timer = 0
+        timer = 4
         trajectory = []
         pos = list(start_pos)
 
-        while timer <= 5:
+        while timer > 0:
             vel_x = force * cos(angle)
             vel_y = -force * sin(angle)
 
             time += 1 / fps
-            timer += 1 / fps
+            timer -= 1 / fps
             point_timer -= 1 / fps
 
             old_pos = list(pos)
@@ -76,6 +81,11 @@ class Grenade:
             # Check collision
             for p in collision_pos:
                 if tilemap.is_pos_in_tile(collision_pos[p]):
+
+                    point = tilemap.line_touch_tile(old_pos, collision_pos[p])
+                    if point:
+                        trajectory.append(list(point))
+
                     collided = True
                     if p == "left":
                         vel_x = abs(vel_x)
@@ -101,7 +111,7 @@ class Grenade:
                     angle += 2 * pi
 
             if point_timer <= 0:
-                point_timer = 0.2
+                point_timer = max_point_timer
                 trajectory.append(list(pos))
 
         return trajectory
@@ -122,6 +132,13 @@ class Grenade:
         if self.timer <= 0:
             self.game.tilemap.remove_tiles_around(self.pos, radius=4)
             self.game.damage_player(self.pos, radius=5)
+            self.game.change_player_transition()
+            # self.game.changing_turn = True
+            for _ in range(100):
+                r = 4
+                vx = random.uniform(-r, r)
+                vy = random.uniform(-r, r)
+                self.game.particles.append(Particle(self.game, "particle", (self.pos[0], self.pos[1]), (vx, vy)))
             self.game.projectile = None
 
         # Time

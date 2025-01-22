@@ -1,7 +1,7 @@
 import pygame
 
 from scripts.core.constants import FPS
-from scripts.core.utils import SFX_PATH, play_sfx, add_points, point_to_int, pg_debug
+from scripts.core.utils import SFX_PATH, play_sfx, add_points, point_to_int, show_text
 from scripts.entities.physics_entity import PhysicsEntity
 
 from scripts.features.grenade import Grenade
@@ -9,13 +9,14 @@ from scripts.features.rocket import Rocket
 
 
 class Player(PhysicsEntity):
-    def __init__(self, game, pos, size):
-        super().__init__(game, 'player', pos, size, outline=(0, 0, 0, 180))
+    def __init__(self, game, pos, size, number):
+        super().__init__(game, 'player', number, pos, size, outline=(0, 0, 0, 180))
         self.air_time = 0
         self.jumps = 1
         self.max_jumps = 1
         self.charge_jumping = False
         self.jump_force = 1.5
+        self.parachute = False
 
         self.jump_sound = pygame.mixer.Sound(SFX_PATH + 'jump.wav')
         self.jump_sound.set_volume(0.7)
@@ -24,7 +25,7 @@ class Player(PhysicsEntity):
         self.shoot_offset = [10, 10]
 
         self.weapon = 0
-        self.health = 100
+        self.health = 0
 
     def charge_jump(self):
         if self.jumps > 0:
@@ -43,6 +44,11 @@ class Player(PhysicsEntity):
         if not self.charge_jumping and self.air_time <= 6:
             self.set_action('idle')
             self.charge_shooting = True
+
+    def cancel_shoot(self):
+        if self.charge_shooting:
+            self.set_action('idle')
+            self.charge_shooting = False
 
     def shoot(self):
         if self.charge_shooting:
@@ -72,6 +78,7 @@ class Player(PhysicsEntity):
         if self.collisions['bottom']:
             self.air_time = 0
             self.jumps = self.max_jumps
+            self.parachute = False
 
         # Animation action
         if self.air_time > 8:
@@ -80,6 +87,12 @@ class Player(PhysicsEntity):
             self.set_action('run')
         else:
             self.set_action('idle')
+
+        # Parachute
+        if self.velocity[1] >= 8:
+            self.parachute = True
+        if self.parachute:
+            self.velocity[1] = max(2, self.velocity[1] - 0.3)
 
         # Clamp velocity
         if self.velocity[0] > 0:
@@ -108,9 +121,9 @@ class Player(PhysicsEntity):
             elif self.weapon == 1:
                 trajectory = Grenade.calculate_trajectory(self.game.tilemap, point_to_int(pos), mouse_pos, FPS)
 
-            radius = 5
-            n = len(trajectory)
-            print(n)
+            radius = 4.5
+            c = 255
             for i, point in enumerate(trajectory):
+                pygame.draw.circle(surf, (c, c, c), add_points(point, self.game.scroll, sub=True), radius)
                 radius = max(2, radius * 0.95)
-                pygame.draw.circle(surf, (255, 255, 255), add_points(point, self.game.scroll, sub=True), radius)
+                c = max(100, c * 0.97)

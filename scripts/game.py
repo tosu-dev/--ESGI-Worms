@@ -1,9 +1,10 @@
 # TODO : Framerate independant gravity
-# TODO : Can't interact while projectile and change player turn when end of projectile (pause then change)
 # TODO : Rocket smoke while moving
-# TODO : Explosion particule
 # TODO : Sound
-# TODO : Weapon selector
+# TODO : Wind
+# TODO : Menu
+# TODO : Win/Lose condition
+# TODO : Parachute
 
 import math
 import pygame
@@ -16,7 +17,6 @@ from scripts.core.constants import *
 from scripts.core.utils import *
 from scripts.entities.player import Player
 from scripts.features.timer import Timer
-
 
 class Game:
     # ===== SINGLETON =====
@@ -44,6 +44,7 @@ class Game:
         self.fps = FPS
         self.delta_time = 0
 
+        self.menu = True
         self.weapon_overlay = pygame.Surface((64, 64))
 
         self.assets = {
@@ -56,13 +57,19 @@ class Game:
             'spawners': load_images('tiles/spawners'),
             'stone': load_images('tiles/stone'),
 
-            'player/idle': Animation(load_images('entities/player/idle'), 6),
-            'player/run': Animation(load_images('entities/player/run'), 4),
-            'player/jump': Animation(load_images('entities/player/jump')),
+            'player0/idle': Animation(load_images('entities/player0/idle'), 6),
+            'player0/run': Animation(load_images('entities/player0/run'), 4),
+            'player0/jump': Animation(load_images('entities/player0/jump')),
+
+            'player1/idle': Animation(load_images('entities/player1/idle'), 6),
+            'player1/run': Animation(load_images('entities/player1/run'), 4),
+            'player1/jump': Animation(load_images('entities/player1/jump')),
 
             'rocket': load_image('weapons/rocket.png'),
             'grenade': load_image('weapons/grenade.png'),
             'weapon_frame_border': load_image('overlays/frame_border.png'),
+
+            'particles/particle': Animation(load_images('particles/particle'), 7, loop=False),
         }
 
         self.musics = {
@@ -77,10 +84,12 @@ class Game:
 
         self.tilemap = load_map(self, "map.json")
         self.players = [
-            Player(self, (0, 0), (8, 15)),
-            Player(self, (0, 0), (8, 15)),
+            Player(self, (0, 0), (8, 15), 0),
+            Player(self, (0, 0), (8, 15), 1),
         ]
+        self.winner = None
         self.projectile = None
+        self.particles = []
 
         self.mouse_pos = [0, 0]
 
@@ -88,9 +97,12 @@ class Game:
         self.scroll = [0, 0]
         self.screenshake = 0
         self.player_turn = 0
+        self.zoom = 1
+        self.changing_turn = False
+        self.changing_turn_timer = 2
 
         pygame.time.set_timer(pygame.USEREVENT, 1000)
-        self.timer = Timer(120, (50, 50))
+        self.timer = Timer(10, (50, 50))
 
         self.load_level()
 
@@ -109,14 +121,31 @@ class Game:
         self.scroll[0] = self.players[self.player_turn].rect().centerx - self.display.get_width() / 2
         self.scroll[1] = self.players[self.player_turn].rect().centery - self.display.get_height() / 2
 
+    def is_playing(self):
+        return not (self.projectile or self.changing_turn or self.winner is not None)
+
+    def change_player_transition(self):
+        self.changing_turn_timer = 2
+        self.changing_turn = True
+        self.players[self.player_turn].charge_shooting = False
+        self.movement = [[False, False], [False, False], ]
+
+    def change_player_turn(self):
+        self.changing_turn_timer = 2
+        self.changing_turn = False
+        self.timer.reset()
+        self.player_turn = (self.player_turn + 1) % 2
+
     def damage_player(self, pos, radius=1):
-        for player in self.players:
+        for i, player in enumerate(self.players):
             v = (player.pos[0] - pos[0]), (player.pos[1] - pos[1])
             r = radius * self.tilemap.tile_size
             if v[0] ** 2 + v[1] ** 2 <= r ** 2:
                 l = math.sqrt(v[0]**2 + v[1]**2)
                 ratio = 1 - (l / r)
                 player.health -= self.projectile.damage * ratio
+                if player.health <= 0:
+                    self.winner = (i + 1) % 2
 
     def run(self):
         prev_time = time()
@@ -135,17 +164,21 @@ class Game:
             self.mouse_pos[1] //= self.render_scale
 
             # Camera
-            if self.projectile:
-                self.scroll[0] += (self.projectile.pos[0] - self.display.get_width() / 2 -
-                                   self.scroll[0]) / 10
-                self.scroll[1] += (self.projectile.pos[1] - self.display.get_height() / 2 -
-                                   self.scroll[1]) / 10
-            else:
-                self.scroll[0] += (self.players[self.player_turn].rect().centerx - self.display.get_width() / 2 -
-                                   self.scroll[0]) / 10
-                self.scroll[1] += (self.players[self.player_turn].rect().centery - self.display.get_height() / 2 -
-                                   self.scroll[1]) / 10
-            render_scroll = (int(self.scroll[0]), int(self.scroll[1]))
+            if not self.changing_turn:
+                if self.projectile:
+                    self.scroll[0] += (self.projectile.pos[0] - self.display.get_width() / 2 -
+                                       self.scroll[0]) / 10
+                    self.scroll[1] += (self.projectile.pos[1] - self.display.get_height() / 2 -
+                                       self.scroll[1]) / 10
+                else:
+                    self.scroll[0] += (self.players[self.player_turn].rect().centerx - self.display.get_width() / 2 -
+                                       self.scroll[0]) / 10
+                    self.scroll[1] += (self.players[self.player_turn].rect().centery - self.display.get_height() / 2 -
+                                       self.scroll[1]) / 10
+            render_scroll = [
+                int(self.scroll[0]),
+                int(self.scroll[1])
+            ]
 
             # ==================== START EVENT ==================== #
             for event in pygame.event.get():
@@ -154,39 +187,45 @@ class Game:
                     sys.exit()
 
                 if event.type == pygame.USEREVENT:
-                    self.timer.countdown()
-                    if self.timer.is_finished():
-                        self.timer.reset()
-                        self.player_turn = (self.player_turn + 1) % 2
-                        self.movement = [[False, False], [False, False], ]
+                    if self.is_playing():
+                        self.timer.countdown()
+                        if self.timer.is_finished():
+                            self.change_player_transition()
 
                 if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_LEFT:
-                        self.movement[self.player_turn][0] = True
-                    if event.key == pygame.K_RIGHT:
-                        self.movement[self.player_turn][1] = True
-                    if event.key == pygame.K_UP:
-                        self.players[self.player_turn].charge_jump()
+                    if self.is_playing():
+                        if event.key == pygame.K_LEFT:
+                            self.movement[self.player_turn][0] = True
+                        if event.key == pygame.K_RIGHT:
+                            self.movement[self.player_turn][1] = True
+                        if event.key == pygame.K_UP:
+                            self.players[self.player_turn].charge_jump()
 
                 if event.type == pygame.KEYUP:
-                    if event.key == pygame.K_LEFT:
-                        self.movement[self.player_turn][0] = False
-                    if event.key == pygame.K_RIGHT:
-                        self.movement[self.player_turn][1] = False
-                    if event.key == pygame.K_UP:
-                        self.players[self.player_turn].jump()
+                    if self.is_playing():
+                        if event.key == pygame.K_LEFT:
+                            self.movement[self.player_turn][0] = False
+                        if event.key == pygame.K_RIGHT:
+                            self.movement[self.player_turn][1] = False
+                        if event.key == pygame.K_UP:
+                            self.players[self.player_turn].jump()
 
                 if event.type == pygame.MOUSEBUTTONDOWN:
-                    if event.button == 1:
-                        self.players[self.player_turn].charge_shoot()
+                    if self.is_playing():
+                        if event.button == 1:
+                            self.players[self.player_turn].charge_shoot()
+                        if event.button == 3:
+                            self.players[self.player_turn].cancel_shoot()
 
                 if event.type == pygame.MOUSEBUTTONUP:
-                    if event.button == 1:
-                        self.players[self.player_turn].shoot()
+                    if self.is_playing():
+                        if event.button == 1:
+                            self.players[self.player_turn].shoot()
 
                 if event.type == pygame.MOUSEWHEEL:
-                    self.players[self.player_turn].weapon += event.y
-                    self.players[self.player_turn].weapon %= 2
+                    if self.is_playing():
+                        self.players[self.player_turn].weapon += event.y
+                        self.players[self.player_turn].weapon %= 2
 
             # ==================== END EVENT ==================== #
 
@@ -206,27 +245,62 @@ class Game:
 
             # Projectile
             if self.projectile:
+                self.zoom = min(1.8, self.zoom + 0.1)
                 self.projectile.render(self.display, offset=render_scroll)
                 self.projectile.update(fps=FPS)
-
-            # Timer
-            self.timer.render(self.display, (20, 20))
-
-            # Weapon type
-            self.weapon_overlay.fill((0, 0, 0))
-            if self.players[self.player_turn].weapon == 0:
-                weapon_img = self.assets["rocket"]
-            elif self.players[self.player_turn].weapon == 1:
-                weapon_img = self.assets["grenade"]
+                self.movement = [[False, False], [False, False]]
+            # Changing turn
+            elif self.changing_turn:
+                self.changing_turn_timer -= 1 / FPS
+                if self.changing_turn_timer <= 0:
+                    self.change_player_turn()
+            elif self.winner is not None:
+                self.zoom = min(1.8, self.zoom + 0.1)
+            # Playing
             else:
-                weapon_img = self.assets["rocket"]
-            self.weapon_overlay.blit(pygame.transform.scale(weapon_img, (32, 32)), (16, 16))
-            self.weapon_overlay.blit(self.assets["weapon_frame_border"], (0, 0))
+                self.zoom = max(1, self.zoom - 0.1)
+                # Timer
+                self.timer.render(self.display, (20, 20))
 
-            self.display.blit(self.weapon_overlay, (10, 406))
+                # Weapon type
+                self.weapon_overlay.fill((0, 0, 0))
+                if self.players[self.player_turn].weapon == 0:
+                    weapon_img = self.assets["rocket"]
+                elif self.players[self.player_turn].weapon == 1:
+                    weapon_img = self.assets["grenade"]
+                else:
+                    weapon_img = self.assets["rocket"]
+                self.weapon_overlay.blit(pygame.transform.scale(weapon_img, (32, 32)), (16, 16))
+                self.weapon_overlay.blit(self.assets["weapon_frame_border"], (0, 0))
+                self.display.blit(self.weapon_overlay, (10, 406))
+
+            # Particles
+            particles_to_kill = []
+            for i, particle in enumerate(self.particles):
+                kill = particle.update()
+                if kill:
+                    particles_to_kill.append(i)
+
+            particles = []
+            for i in range(len(self.particles)):
+                if i not in particles_to_kill:
+                    particles.append(self.particles[i])
+
+            for particule in self.particles:
+                particule.render(self.display, render_scroll)
+
+            self.particles = particles
 
             # Display
-            self.screen.blit(pygame.transform.scale(self.display, self.screen.get_size()), (
-            (random() * self.screenshake - self.screenshake / 2), (random() * self.screenshake - self.screenshake / 2)))
+            screen_size = (SCREEN_SIZE[0] * self.zoom, SCREEN_SIZE[1] * self.zoom)
+            screen = pygame.transform.scale(self.display, screen_size)
+            dest = (
+                -((self.zoom - 1) * SCREEN_SIZE[0] / 2),
+                -((self.zoom - 1) * SCREEN_SIZE[1] / 2)
+            )
+            screenshake = ((random() * self.screenshake - self.screenshake / 2), (random() * self.screenshake - self.screenshake / 2))
+            self.screen.blit(screen, (dest[0] + screenshake[0], dest[1] + screenshake[1]))
+            if self.winner is not None and not self.changing_turn:
+                show_text(self.screen, f"Winner is player {self.winner + 1}", (SCREEN_SIZE[0] // 2, SCREEN_SIZE[1] // 2), (255, 255, 255), center=True, font=WINNER_FONT)
             pygame.display.update()
             self.clock.tick(FPS)
