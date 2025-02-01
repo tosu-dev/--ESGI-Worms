@@ -53,7 +53,6 @@ class Editor:
         self.start_mouse_pos = (0, 0)
         self.start_scroll    = (0, 0)
 
-
     def run(self):
         while True:
             self.display.fill((0, 0, 0))

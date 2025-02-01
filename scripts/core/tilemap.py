@@ -57,7 +57,6 @@ class TileMap:
         return loc in self.tilemap
 
     def line_touch_tile(self, start_pos, end_pos, physics=True):
-        touched = False
         steps = 100
         for t in range(steps + 1):
             x = int(start_pos[0] + t * (end_pos[0] - start_pos[0]) / steps)

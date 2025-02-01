@@ -10,7 +10,7 @@ import math
 import pygame
 import sys
 from time import time
-from random import random
+from random import random, randint
 
 from scripts.core.animation import Animation
 from scripts.core.constants import *
@@ -90,16 +90,22 @@ class Game:
         self.winner = None
         self.projectile = None
         self.particles = []
+        self.wind_particles = []
+        for _ in range(20):
+            x = randint(0, SCREEN_SIZE[0])
+            y = randint(0, SCREEN_SIZE[1])
+            self.wind_particles.append([x, y])
 
         self.mouse_pos = [0, 0]
 
-        self.movement = [[False, False], [False, False], ]
+        self.movement = [[False, False], [False, False]]
         self.scroll = [0, 0]
         self.screenshake = 0
         self.player_turn = 0
         self.zoom = 1
         self.changing_turn = False
         self.changing_turn_timer = 2
+        self.wind = [randint(-50, 51), randint(-50, 51)]
 
         pygame.time.set_timer(pygame.USEREVENT, 1000)
         self.timer = Timer(10, (50, 50))
@@ -273,6 +279,28 @@ class Game:
                 self.weapon_overlay.blit(pygame.transform.scale(weapon_img, (32, 32)), (16, 16))
                 self.weapon_overlay.blit(self.assets["weapon_frame_border"], (0, 0))
                 self.display.blit(self.weapon_overlay, (10, 406))
+
+            # Wind
+            for particle in self.wind_particles:
+                particle[0] += self.wind[0] / 2
+                particle[1] += self.wind[1] / 2
+
+                # Redémarrer la particule si elle sort de l'écran
+                if particle[0] > SCREEN_SIZE[0]:
+                    particle[0] = 0
+                    particle[1] = randint(0, SCREEN_SIZE[1])
+                elif 0 > particle[0]:
+                    particle[0] = SCREEN_SIZE[0]
+                    particle[1] = randint(0, SCREEN_SIZE[1])
+
+                if particle[1] > SCREEN_SIZE[1]:
+                    particle[0] = randint(0, SCREEN_SIZE[0])
+                    particle[1] = 0
+                elif 0 > particle[1]:
+                    particle[0] = randint(0, SCREEN_SIZE[0])
+                    particle[1] = SCREEN_SIZE[1]
+
+                pygame.draw.line(self.display, (255, 255, 255), (particle[0], particle[1]), (particle[0] + self.wind[0] / 2, particle[1] + self.wind[1] / 2), 2)
 
             # Particles
             particles_to_kill = []

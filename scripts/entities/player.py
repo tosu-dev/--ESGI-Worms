@@ -25,7 +25,7 @@ class Player(PhysicsEntity):
         self.shoot_offset = [10, 10]
 
         self.weapon = 0
-        self.health = 0
+        self.health = 100
 
     def charge_jump(self):
         if self.jumps > 0:
@@ -117,7 +117,7 @@ class Player(PhysicsEntity):
 
             trajectory = []
             if self.weapon == 0:
-                trajectory = Rocket.calculate_trajectory(self.game.tilemap, point_to_int(pos), mouse_pos, FPS)
+                trajectory = Rocket.calculate_trajectory(self.game.tilemap, self.game.wind, point_to_int(pos), mouse_pos, FPS)
             elif self.weapon == 1:
                 trajectory = Grenade.calculate_trajectory(self.game.tilemap, point_to_int(pos), mouse_pos, FPS)
 

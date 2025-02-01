@@ -2,7 +2,7 @@ import math
 import random
 
 import pygame
-from math import pi, atan2, sqrt, cos, sin
+from math import pi, atan2, sqrt, cos, sin, exp
 
 from scripts.core.utils import load_image, add_points
 from scripts.core.particle import Particle
@@ -36,7 +36,7 @@ class Rocket:
         return Rocket(player_pos, angle, force, game)
 
     @classmethod
-    def calculate_trajectory(cls, tilemap, player_pos, mouse_pos, fps):
+    def calculate_trajectory(cls, tilemap, wind, player_pos, mouse_pos, fps):
         vector = add_points(player_pos, mouse_pos, sub=True)
         angle = atan2(-vector[1], vector[0])
         if angle < 0:
@@ -45,6 +45,7 @@ class Rocket:
 
         vel_x = force * cos(angle)
         vel_y = -force * sin(angle)
+        g = 9.8
 
         point_timer = 0.2
         time = 0
@@ -57,9 +58,8 @@ class Rocket:
                 point_timer = 0.2
 
                 old_pos = list(pos)
-                pos[0] = player_pos[0] + vel_x * time
-                pos[1] = player_pos[1] + (vel_y * time) + (
-                        0.5 * 9.8 * cls.mass * time ** 2)
+                pos[0] = player_pos[0] + vel_x * time + wind[0] * time ** 2
+                pos[1] = player_pos[1] + (vel_y * time) + (0.5 * g * cls.mass * time ** 2) + wind[1] * time ** 2
 
                 point = tilemap.line_touch_tile((old_pos[0], old_pos[1]), (pos[0], pos[1]))
                 if point:
@@ -77,9 +77,12 @@ class Rocket:
         self.time += 1 / fps
         self.old_pos[0] = self.pos[0]
         self.old_pos[1] = self.pos[1]
-        self.pos[0] = self.start_pos[0] + vel_x * self.time
-        self.pos[1] = self.start_pos[1] + (vel_y * self.time) + (
-                0.5 * 9.8 * self.mass * self.time ** 2)
+        wind = self.game.wind
+        g = 9.8
+
+        self.pos[0] = self.start_pos[0] + vel_x * self.time + wind[0] * self.time ** 2
+        self.pos[1] = self.start_pos[1] + (vel_y * self.time) + (0.5 * g * self.mass * self.time ** 2) + wind[1] * self.time ** 2
+
 
         v = [self.pos[0] - self.old_pos[0], self.pos[1] - self.old_pos[1]]
 
