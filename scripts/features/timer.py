@@ -3,7 +3,7 @@ import pygame
 
 
 class Timer:
-    def __init__(self, seconds, size=(20, 20), bg=(0, 0, 0), fg=(255, 255, 255)):
+    def __init__(self, seconds, size=(32, 32), bg=(0, 0, 0), fg=(255, 255, 255)):
         self.size = size
         self.display = pygame.Surface(size, pygame.SRCALPHA)
         self.seconds = seconds

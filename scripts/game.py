@@ -16,6 +16,7 @@ from scripts.core.animation import Animation
 from scripts.core.constants import *
 from scripts.core.utils import *
 from scripts.entities.player import Player
+from scripts.features.minimap import Minimap
 from scripts.features.timer import Timer
 
 class Game:
@@ -106,9 +107,10 @@ class Game:
         self.changing_turn = False
         self.changing_turn_timer = 2
         self.wind = [randint(-50, 51), randint(-50, 51)]
+        self.minimap = Minimap(self, (8, 8), SCREEN_SIZE, 8, 1)
 
         pygame.time.set_timer(pygame.USEREVENT, 1000)
-        self.timer = Timer(10, (50, 50))
+        self.timer = Timer(10, (64, 64))
 
         self.load_level()
 
@@ -266,7 +268,7 @@ class Game:
             else:
                 self.zoom = max(1, self.zoom - 0.1)
                 # Timer
-                self.timer.render(self.display, (20, 20))
+                self.timer.render(self.display, (10, 406))
 
                 # Weapon type
                 self.weapon_overlay.fill((0, 0, 0))
@@ -278,7 +280,10 @@ class Game:
                     weapon_img = self.assets["rocket"]
                 self.weapon_overlay.blit(pygame.transform.scale(weapon_img, (32, 32)), (16, 16))
                 self.weapon_overlay.blit(self.assets["weapon_frame_border"], (0, 0))
-                self.display.blit(self.weapon_overlay, (10, 406))
+                self.display.blit(self.weapon_overlay, (80, 406))
+
+                # Minimap
+                self.minimap.render(self.display, render_scroll)
 
             # Wind
             for particle in self.wind_particles:
