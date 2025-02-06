@@ -18,6 +18,7 @@ from scripts.core.utils import *
 from scripts.entities.player import Player
 from scripts.features.minimap import Minimap
 from scripts.features.timer import Timer
+from scripts.menu import  Menu
 
 class Game:
     # ===== SINGLETON =====
@@ -44,10 +45,11 @@ class Game:
         self.target_fps = TARGET_FPS
         self.fps = FPS
         self.delta_time = 0
+        self.menu = Menu(self)
 
-        self.menu = True
+
+    def init_game(self, map):
         self.weapon_overlay = pygame.Surface((64, 64))
-
         self.assets = {
             'bg': load_image('background.png'),
             'projectile': load_image('projectile.png'),
@@ -72,18 +74,14 @@ class Game:
 
             'particles/particle': Animation(load_images('particles/particle'), 7, loop=False),
         }
-
         self.musics = {
             'default': pygame.mixer.Sound(MUSIC_PATH + 'music.wav'),
         }
         self.musics['default'].set_volume(0.5)
-
         self.sfx = {
             'ambience': pygame.mixer.Sound(SFX_PATH + 'ambience.wav'),
         }
         self.sfx['ambience'].set_volume(0.2)
-
-        self.tilemap = load_map(self, "map.json")
         self.players = [
             Player(self, (0, 0), (8, 15), 0),
             Player(self, (0, 0), (8, 15), 1),
@@ -98,7 +96,6 @@ class Game:
             self.wind_particles.append([x, y])
 
         self.mouse_pos = [0, 0]
-
         self.movement = [[False, False], [False, False]]
         self.scroll = [0, 0]
         self.screenshake = 0
@@ -108,13 +105,14 @@ class Game:
         self.changing_turn_timer = 2
         self.wind = [randint(-50, 51), randint(-50, 51)]
         self.minimap = Minimap(self, (8, 8), SCREEN_SIZE, 8, 1)
-
         pygame.time.set_timer(pygame.USEREVENT, 1000)
         self.timer = Timer(10, (64, 64))
+        self.load_level(map)
 
-        self.load_level()
-
-    def load_level(self):
+    def load_level(self, map):
+        self.tilemap = load_map(self, map)
+        self.musics['default'].play(-1)
+        self.sfx['ambience'].play(-1)
         self.player_turn = 0
         self.players[0].air_time = 0
         self.scroll = [0, 0]
@@ -157,11 +155,14 @@ class Game:
 
     def run(self):
         prev_time = time()
-
-        self.musics['default'].play(-1)
-        self.sfx['ambience'].play(-1)
-
         while True:
+            if self.menu.running:
+                self.menu.run()
+                # self.screen.blit(pygame.transform.scale(self.display, SCREEN_SIZE), (0, 0))
+                pygame.display.update()
+                self.clock.tick(FPS)
+                continue
+
             # DELTA TIME
             self.delta_time = (time() - prev_time) * self.target_fps
             prev_time = time()

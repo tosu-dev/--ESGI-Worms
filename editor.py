@@ -11,13 +11,13 @@ RENDER_SCALE = 1
 class Editor:
     # ===== SINGLETON =====
     __instance = None
-    def __new__(cls, path):
+    def __new__(cls, name):
         if cls.__instance is None:
             cls.__instance = super(Editor, cls).__new__(cls)
             cls.__instance.__initialized = False
         return cls.__instance
 
-    def __init__(self, path=None):
+    def __init__(self, name=None):
         if (self.__initialized): return
         self.__initialized = True
 
@@ -38,8 +38,8 @@ class Editor:
         }
 
         self.tilemap = TileMap(self)
-        if path:
-            self.tilemap.load(MAP_PATH + '/' + path)
+        if name:
+            self.tilemap.load(MAP_PATH + '/' + name + '/map.json')
 
         self.scroll          = [0, 0]
         self.tile_list       = list(self.assets)
@@ -165,4 +165,4 @@ class Editor:
 
 
 # ========================================
-Editor('map.json').run()
+Editor('map1').run()
