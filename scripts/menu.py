@@ -2,7 +2,7 @@ import pygame
 import sys
 
 from scripts.core.constants import SCREEN_SIZE
-from scripts.core.utils import load_image, get_map_names
+from scripts.core.utils import load_image, get_map_names, scale_img_keep_aspect_ratio
 from scripts.core.font import Font
 
 class Menu:
@@ -36,7 +36,7 @@ class Menu:
         for i, map_name in enumerate(get_map_names()):
             self.menus['map']['map_list'].append({
                 'name': map_name,
-                'thumbnail': load_image(f'../maps/{map_name}/thumbnail.png', colorkey=None),
+                'thumbnail': scale_img_keep_aspect_ratio(load_image(f'../maps/{map_name}/thumbnail.png', colorkey=None), 640, 480),
             })
             self.menus['map']['current_map'] = 0
 

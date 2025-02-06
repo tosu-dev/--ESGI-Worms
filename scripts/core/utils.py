@@ -1,4 +1,6 @@
 import os
+
+import pygame
 from pygame import image, font
 
 from scripts.core.tilemap import TileMap
@@ -68,3 +70,12 @@ def add_points(point1, point2, sub=False):
 def point_to_int(point):
     """ Convert position to int position"""
     return [int(point[0]), int(point[1])]
+
+def scale_img_keep_aspect_ratio(image, width, height):
+    width_ratio = width / image.get_width()
+    height_ratio = height / image.get_height()
+    ratio = max(width_ratio, height_ratio)
+    new_width = ratio * image.get_width()
+    new_height = ratio * image.get_height()
+    return pygame.transform.scale(image, (new_width, new_height))
+
