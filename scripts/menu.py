@@ -9,8 +9,8 @@ class Menu:
     def __init__(self, game):
         self.game = game
         self.running = True
-        self.font = Font('data/fonts/large_font.png')
         scale_factor = 3
+        self.font = Font('data/fonts/large_font.png', scale=scale_factor)
         self.assets = {
             'bg': load_image('background.png'),
             'play': pygame.transform.scale_by(load_image('menu/play.png', colorkey=None, alpha=True), scale_factor),
@@ -79,9 +79,9 @@ class Menu:
             map = self.menus['map']['map_list'][self.menus['map']['current_map']]
             thumbnail = map['thumbnail']
             thumbnail_pos = (SCREEN_SIZE[0] // 2 - thumbnail.get_width() // 2, SCREEN_SIZE[1] // 2 - thumbnail.get_height() // 2)
-            name_pos = (SCREEN_SIZE[0] // 2, thumbnail_pos[1] - 20)
+            name_pos = (SCREEN_SIZE[0] // 2, thumbnail_pos[1] - 50)
             self.game.screen.blit(thumbnail, thumbnail_pos)
-            self.font.render(self.game.screen, map['name'], name_pos, center=True)
+            self.font.render(self.game.screen, map['name'], name_pos, center=True, bg=(0, 0, 0))
 
             # Buttons
             self.game.screen.blit(self.assets['play'], self.menus['map']['play_button'])

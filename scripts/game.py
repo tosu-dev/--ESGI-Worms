@@ -6,6 +6,7 @@ from random import random, randint
 
 from scripts.core.animation import Animation
 from scripts.core.constants import *
+from scripts.core.font import Font
 from scripts.core.utils import *
 from scripts.entities.player import Player
 from scripts.features.minimap import Minimap
@@ -38,6 +39,7 @@ class Game:
         self.fps = FPS
         self.delta_time = 0
         self.menu = Menu(self)
+        self.font = Font('data/fonts/large_font.png', scale=4)
 
 
     def init_game(self, map):
@@ -328,6 +330,6 @@ class Game:
             screenshake = ((random() * self.screenshake - self.screenshake / 2), (random() * self.screenshake - self.screenshake / 2))
             self.screen.blit(screen, (dest[0] + screenshake[0], dest[1] + screenshake[1]))
             if self.winner is not None and not self.changing_turn:
-                show_text(self.screen, f"Winner is player {self.winner + 1}", (SCREEN_SIZE[0] // 2, SCREEN_SIZE[1] // 2), (255, 255, 255), center=True, font=WINNER_FONT)
+                self.font.render(self.screen, f"Winner is player {self.winner + 1}", (SCREEN_SIZE[0] // 2, SCREEN_SIZE[1] // 2 - 120), center=True, bg=(0, 0, 0))
             pygame.display.update()
             self.clock.tick(FPS)
