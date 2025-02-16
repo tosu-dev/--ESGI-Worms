@@ -55,6 +55,7 @@ class Editor:
         self.start_mouse_pos = (0, 0)
         self.start_scroll    = (0, 0)
         self.brush_size = 1
+        self.name = name
 
     def run(self):
         while True:
@@ -191,4 +192,4 @@ class Editor:
 
 
 # ========================================
-Editor('Kayou').run()
+Editor().run()

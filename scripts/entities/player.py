@@ -28,11 +28,11 @@ class Player(PhysicsEntity):
         self.health = 100
 
     def charge_jump(self):
-        if self.jumps > 0:
+        if self.jumps > 0 and self.air_time <= 6:
             self.charge_jumping = True
 
     def jump(self):
-        if self.jumps > 0:
+        if self.charge_jumping:
             play_sfx(self.jump_sound)
             self.velocity[1] = -self.jump_force
             self.jumps -= 1
@@ -101,10 +101,15 @@ class Player(PhysicsEntity):
             self.velocity[0] = min(self.velocity[0] + 0.1, 0)
 
     def render(self, surf, offset=(0, 0)):
+        player_render_pos = self.get_render_pos(offset)
+
+        # Parachute
+        if self.parachute:
+            surf.blit(self.game.assets['parachute'], (player_render_pos[0] - 2, player_render_pos[1] - 8))
+
         super().render(surf, offset)
 
         # Health bar
-        player_render_pos = self.get_render_pos(offset)
         healthbar_pos = (player_render_pos[0] - 3, player_render_pos[1] - 5)
         healthbar_width = 20
         pygame.draw.rect(surf, (255, 0, 0), (healthbar_pos, (healthbar_width, 2)))

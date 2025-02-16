@@ -1,11 +1,3 @@
-# TODO : Framerate independant gravity
-# TODO : Rocket smoke while moving
-# TODO : Sound
-# TODO : Wind
-# TODO : Menu
-# TODO : Win/Lose condition
-# TODO : Parachute
-
 import math
 import pygame
 import sys
@@ -68,6 +60,7 @@ class Game:
             'player1/run': Animation(load_images('entities/player1/run'), 4),
             'player1/jump': Animation(load_images('entities/player1/jump')),
 
+            'parachute': load_image('weapons/parachute.png'),
             'rocket': load_image('weapons/rocket.png'),
             'grenade': load_image('weapons/grenade.png'),
             'weapon_frame_border': load_image('overlays/frame_border.png'),
@@ -106,7 +99,7 @@ class Game:
         self.wind = [randint(-50, 51), randint(-50, 51)]
         self.minimap = Minimap(self, (8, 8), SCREEN_SIZE, 8, 1)
         pygame.time.set_timer(pygame.USEREVENT, 1000)
-        self.timer = Timer(10, (64, 64))
+        self.timer = Timer(30, (64, 64))
         self.load_level(map)
 
     def load_level(self, map):
