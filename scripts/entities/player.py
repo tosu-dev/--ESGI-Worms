@@ -22,7 +22,7 @@ class Player(PhysicsEntity):
         self.shoot_offset = [10, 10]
 
         self.weapon = 0
-        self.health = 100
+        self.health = 10
 
         self.footstep_tick = 16
 

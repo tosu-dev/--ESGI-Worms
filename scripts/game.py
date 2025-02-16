@@ -83,6 +83,7 @@ class Game:
         }
         self.musics['potato'].set_volume(0.2)
         self.musics['time_for_adventure'].set_volume(0.2)
+        self.music = self.musics[choice(list(self.musics.keys()))]
 
         self.sfx = {
             'ambience': pygame.mixer.Sound(SFX_PATH + 'ambience.wav'),
@@ -93,6 +94,7 @@ class Game:
             'parachute': pygame.mixer.Sound(SFX_PATH + 'parachute.wav'),
             'jump': pygame.mixer.Sound(SFX_PATH + 'jump.wav'),
             'footstep': pygame.mixer.Sound(SFX_PATH + 'footstep.wav'),
+            'victory': pygame.mixer.Sound(SFX_PATH + 'victory.wav'),
         }
         self.sfx['ambience'].set_volume(0.2)
         self.sfx['menu_click'].set_volume(0.1)
@@ -102,6 +104,7 @@ class Game:
         self.sfx['parachute'].set_volume(0.5)
         self.sfx['jump'].set_volume(0.6)
         self.sfx['footstep'].set_volume(0.4)
+        self.sfx['victory'].set_volume(0.5)
 
         self.players = [
             Player(self, (0, 0), (8, 15), 0),
@@ -132,7 +135,7 @@ class Game:
 
     def load_level(self, map):
         self.tilemap = load_map(self, map)
-        self.musics[choice(list(self.musics.keys()))].play(-1)
+        self.music.play(-1)
         self.sfx['ambience'].play(-1)
         self.player_turn = 0
         self.players[0].air_time = 0
@@ -177,6 +180,7 @@ class Game:
 
 
     def run(self):
+        victory_music = False
         prev_time = time()
         while True:
             if self.menu.running:
@@ -250,7 +254,7 @@ class Game:
                     elif self.winner is not None and not self.changing_turn:
                         if event.button == 1:
                             if self.menu_rects['main_menu'].collidepoint(event.pos):
-                                self.musics['default'].stop()
+                                self.music.stop()
                                 self.sfx['ambience'].stop()
                                 self.sfx['menu_click'].play()
                                 self.menu.running = True
@@ -365,6 +369,10 @@ class Game:
             self.screen.blit(screen, (dest[0] + screenshake[0], dest[1] + screenshake[1]))
 
             if self.winner is not None and not self.changing_turn:
+                if not victory_music:
+                    self.music.stop()
+                    self.sfx['victory'].play()
+                    victory_music = True
                 self.font.render(self.screen, f"Winner is player {self.winner + 1}", (SCREEN_SIZE[0] // 2, SCREEN_SIZE[1] // 2 - 120), center=True, bg=(0, 0, 0))
                 self.screen.blit(self.menu_assets['main_menu'], self.menu_rects['main_menu'])
 
