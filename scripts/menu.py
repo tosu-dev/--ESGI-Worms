@@ -57,6 +57,7 @@ class Menu:
                         if self.menus['map']['play_button'].collidepoint(event.pos):
                             map = self.menus['map']['map_list'][self.menus['map']['current_map']]
                             self.game.init_game(map['name'])
+                            self.current_menu = 'main'
                             self.running = False
                         elif self.menus['map']['previous_button'].collidepoint(event.pos):
                             self.menus['map']['current_map'] -= 1

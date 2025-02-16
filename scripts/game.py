@@ -1,5 +1,13 @@
+# Audio qui manque :
+# - Grenade : rebond, explosion
+# - Rocket : Travel, explosion
+# - Player : Parachute, marche
+# - Menu : Boutons
+# - Musique de victoire
+
+#
+
 import math
-import pygame
 import sys
 from time import time
 from random import random, randint
@@ -68,6 +76,14 @@ class Game:
             'weapon_frame_border': load_image('overlays/frame_border.png'),
 
             'particles/particle': Animation(load_images('particles/particle'), 7, loop=False),
+        }
+        self.menu_assets = {
+            'main_menu': pygame.transform.scale_by(load_image('menu/main_menu.png', colorkey=None, alpha=True), 3),
+        }
+        self.menu_rects = {
+            'main_menu': pygame.Rect((SCREEN_SIZE[0] // 2 - self.menu_assets['main_menu'].get_width() // 2,
+                                        SCREEN_SIZE[1] - self.menu_assets['main_menu'].get_height() - 20),
+                                       self.menu_assets['main_menu'].get_size()),
         }
         self.musics = {
             'default': pygame.mixer.Sound(MUSIC_PATH + 'music.wav'),
@@ -153,7 +169,6 @@ class Game:
         while True:
             if self.menu.running:
                 self.menu.run()
-                # self.screen.blit(pygame.transform.scale(self.display, SCREEN_SIZE), (0, 0))
                 pygame.display.update()
                 self.clock.tick(FPS)
                 continue
@@ -220,6 +235,12 @@ class Game:
                             self.players[self.player_turn].charge_shoot()
                         if event.button == 3:
                             self.players[self.player_turn].cancel_shoot()
+                    elif self.winner is not None and not self.changing_turn:
+                        if event.button == 1:
+                            if self.menu_rects['main_menu'].collidepoint(event.pos):
+                                self.musics['default'].stop()
+                                self.sfx['ambience'].stop()
+                                self.menu.running = True
 
                 if event.type == pygame.MOUSEBUTTONUP:
                     if self.is_playing():
@@ -329,7 +350,10 @@ class Game:
             )
             screenshake = ((random() * self.screenshake - self.screenshake / 2), (random() * self.screenshake - self.screenshake / 2))
             self.screen.blit(screen, (dest[0] + screenshake[0], dest[1] + screenshake[1]))
+
             if self.winner is not None and not self.changing_turn:
                 self.font.render(self.screen, f"Winner is player {self.winner + 1}", (SCREEN_SIZE[0] // 2, SCREEN_SIZE[1] // 2 - 120), center=True, bg=(0, 0, 0))
+                self.screen.blit(self.menu_assets['main_menu'], self.menu_rects['main_menu'])
+
             pygame.display.update()
             self.clock.tick(FPS)
