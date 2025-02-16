@@ -140,6 +140,7 @@ class Grenade:
                 vy = random.uniform(-r, r)
                 self.game.particles.append(Particle(self.game, "particle", (self.pos[0], self.pos[1]), (vx, vy)))
             self.game.sfx['explosion'].play()
+            self.game.shake_screen(40, 0.4)
             self.game.projectile = None
 
         # Time
