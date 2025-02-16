@@ -57,10 +57,6 @@ def get_map_names():
         maps.append(map_name)
     return maps
 
-def play_sfx(sfx):
-    sfx.stop()
-    sfx.play()
-
 def add_points(point1, point2, sub=False):
     """ Calculate a position with or without an offset """
     if not sub:

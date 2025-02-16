@@ -1,16 +1,7 @@
-# Audio qui manque :
-# - Grenade : rebond, explosion
-# - Rocket : Travel, explosion
-# - Player : Parachute, marche
-# - Menu : Boutons
-# - Musique de victoire
-
-#
-
 import math
 import sys
 from time import time
-from random import random, randint
+from random import random, randint, choice
 
 from scripts.core.animation import Animation
 from scripts.core.constants import *
@@ -85,14 +76,33 @@ class Game:
                                         SCREEN_SIZE[1] - self.menu_assets['main_menu'].get_height() - 20),
                                        self.menu_assets['main_menu'].get_size()),
         }
+
         self.musics = {
-            'default': pygame.mixer.Sound(MUSIC_PATH + 'music.wav'),
+            'potato': pygame.mixer.Sound(MUSIC_PATH + 'potato.wav'),
+            'time_for_adventure': pygame.mixer.Sound(MUSIC_PATH + 'time_for_adventure.mp3'),
         }
-        self.musics['default'].set_volume(0.5)
+        self.musics['potato'].set_volume(0.2)
+        self.musics['time_for_adventure'].set_volume(0.2)
+
         self.sfx = {
             'ambience': pygame.mixer.Sound(SFX_PATH + 'ambience.wav'),
+            'menu_click': pygame.mixer.Sound(SFX_PATH + 'jump.wav'),
+            'hurt': pygame.mixer.Sound(SFX_PATH + 'hurt.wav'),
+            'tap': pygame.mixer.Sound(SFX_PATH + 'tap.wav'),
+            'explosion': pygame.mixer.Sound(SFX_PATH + 'explosion.wav'),
+            'parachute': pygame.mixer.Sound(SFX_PATH + 'parachute.wav'),
+            'jump': pygame.mixer.Sound(SFX_PATH + 'jump.wav'),
+            'footstep': pygame.mixer.Sound(SFX_PATH + 'footstep.wav'),
         }
         self.sfx['ambience'].set_volume(0.2)
+        self.sfx['menu_click'].set_volume(0.1)
+        self.sfx['explosion'].set_volume(0.1)
+        self.sfx['tap'].set_volume(0.5)
+        self.sfx['hurt'].set_volume(2)
+        self.sfx['parachute'].set_volume(0.5)
+        self.sfx['jump'].set_volume(0.6)
+        self.sfx['footstep'].set_volume(0.4)
+
         self.players = [
             Player(self, (0, 0), (8, 15), 0),
             Player(self, (0, 0), (8, 15), 1),
@@ -122,7 +132,7 @@ class Game:
 
     def load_level(self, map):
         self.tilemap = load_map(self, map)
-        self.musics['default'].play(-1)
+        self.musics[choice(list(self.musics.keys()))].play(-1)
         self.sfx['ambience'].play(-1)
         self.player_turn = 0
         self.players[0].air_time = 0
@@ -161,8 +171,10 @@ class Game:
                 l = math.sqrt(v[0]**2 + v[1]**2)
                 ratio = 1 - (l / r)
                 player.health -= self.projectile.damage * ratio
+                self.sfx['hurt'].play()
                 if player.health <= 0:
                     self.winner = (i + 1) % 2
+
 
     def run(self):
         prev_time = time()
@@ -240,6 +252,7 @@ class Game:
                             if self.menu_rects['main_menu'].collidepoint(event.pos):
                                 self.musics['default'].stop()
                                 self.sfx['ambience'].stop()
+                                self.sfx['menu_click'].play()
                                 self.menu.running = True
 
                 if event.type == pygame.MOUSEBUTTONUP:

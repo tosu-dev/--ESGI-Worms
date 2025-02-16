@@ -1,7 +1,7 @@
 import pygame
 
 from scripts.core.constants import FPS
-from scripts.core.utils import SFX_PATH, play_sfx, add_points, point_to_int, show_text
+from scripts.core.utils import add_points, point_to_int, show_text
 from scripts.entities.physics_entity import PhysicsEntity
 
 from scripts.features.grenade import Grenade
@@ -18,14 +18,13 @@ class Player(PhysicsEntity):
         self.jump_force = 1.5
         self.parachute = False
 
-        self.jump_sound = pygame.mixer.Sound(SFX_PATH + 'jump.wav')
-        self.jump_sound.set_volume(0.7)
-
         self.charge_shooting = False
         self.shoot_offset = [10, 10]
 
         self.weapon = 0
         self.health = 100
+
+        self.footstep_tick = 16
 
     def charge_jump(self):
         if self.jumps > 0 and self.air_time <= 6:
@@ -33,7 +32,7 @@ class Player(PhysicsEntity):
 
     def jump(self):
         if self.charge_jumping:
-            play_sfx(self.jump_sound)
+            self.game.sfx['jump'].play()
             self.velocity[1] = -self.jump_force
             self.jumps -= 1
             self.air_time = 8
@@ -72,6 +71,15 @@ class Player(PhysicsEntity):
 
         super().update(tilemap, movement, delta_time)
 
+        # Footstep
+        if abs(movement[0]) >= 1 and self.air_time <= 8:
+            self.footstep_tick -= 1
+            if self.footstep_tick == 0:
+                self.game.sfx['footstep'].play()
+                self.footstep_tick = 16
+        else:
+            self.footstep_tick = 16
+
         self.air_time += 1
 
         # Bottom collision
@@ -90,6 +98,7 @@ class Player(PhysicsEntity):
 
         # Parachute
         if self.velocity[1] >= 8:
+            self.game.sfx['parachute'].play()
             self.parachute = True
         if self.parachute:
             self.velocity[1] = max(2, self.velocity[1] - 0.3)
