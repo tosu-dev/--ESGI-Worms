@@ -123,6 +123,7 @@ class Game:
         self.movement = [[False, False], [False, False]]
         self.scroll = [0, 0]
         self.screenshake = 0
+        self.screenshake_timer = 0
         self.player_turn = 0
         self.zoom = 1
         self.changing_turn = False
@@ -178,6 +179,9 @@ class Game:
                 if player.health <= 0:
                     self.winner = (i + 1) % 2
 
+    def shake_screen(self, force, duration):
+        self.screenshake_timer = duration
+        self.screenshake = force
 
     def run(self):
         victory_music = False
@@ -358,6 +362,14 @@ class Game:
 
             self.particles = particles
 
+            # Screenshake
+            screenshake = ((random() * self.screenshake - self.screenshake / 2), (random() * self.screenshake - self.screenshake / 2))
+            if self.screenshake_timer > 0:
+                self.screenshake_timer -= 1 / FPS
+            else:
+                self.screenshake_timer = 0
+                self.screenshake = 0
+
             # Display
             screen_size = (SCREEN_SIZE[0] * self.zoom, SCREEN_SIZE[1] * self.zoom)
             screen = pygame.transform.scale(self.display, screen_size)
@@ -365,7 +377,6 @@ class Game:
                 -((self.zoom - 1) * SCREEN_SIZE[0] / 2),
                 -((self.zoom - 1) * SCREEN_SIZE[1] / 2)
             )
-            screenshake = ((random() * self.screenshake - self.screenshake / 2), (random() * self.screenshake - self.screenshake / 2))
             self.screen.blit(screen, (dest[0] + screenshake[0], dest[1] + screenshake[1]))
 
             if self.winner is not None and not self.changing_turn:

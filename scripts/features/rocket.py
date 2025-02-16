@@ -100,6 +100,7 @@ class Rocket:
                 vy = random.uniform(-r, r)
                 self.game.particles.append(Particle(self.game, "particle", (self.pos[0], self.pos[1]), (vx, vy)))
             self.game.sfx['explosion'].play()
+            self.game.shake_screen(20, 0.2)
             self.game.projectile = None
 
     def render(self, surf, offset):
