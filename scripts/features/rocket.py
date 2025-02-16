@@ -90,7 +90,7 @@ class Rocket:
         if self.rotation < 0:
             self.rotation += 360
 
-        if self.game.tilemap.is_pos_in_tile(self.pos):
+        if self.game.tilemap.is_pos_in_tile(self.pos) or self.time > 10:
             self.game.tilemap.remove_tiles_around(self.pos, radius=2)
             self.game.damage_player(self.pos, radius=3)
             self.game.change_player_transition()
@@ -99,6 +99,7 @@ class Rocket:
                 vx = random.uniform(-r, r)
                 vy = random.uniform(-r, r)
                 self.game.particles.append(Particle(self.game, "particle", (self.pos[0], self.pos[1]), (vx, vy)))
+            self.game.sfx['explosion'].play()
             self.game.projectile = None
 
     def render(self, surf, offset):

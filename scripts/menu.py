@@ -2,7 +2,7 @@ import pygame
 import sys
 
 from scripts.core.constants import SCREEN_SIZE
-from scripts.core.utils import load_image, get_map_names, scale_img_keep_aspect_ratio
+from scripts.core.utils import load_image, get_map_names, scale_img_keep_aspect_ratio, SFX_PATH
 from scripts.core.font import Font
 
 class Menu:
@@ -31,6 +31,8 @@ class Menu:
             },
         }
         self.current_menu = 'main'
+        self.click_sound = pygame.mixer.Sound(SFX_PATH + 'jump.wav')
+        self.click_sound.set_volume(0.1)
 
     def load_maps(self):
         for i, map_name in enumerate(get_map_names()):
@@ -50,18 +52,24 @@ class Menu:
                 if event.button == 1:
                     if self.current_menu == 'main':
                         if self.menus['main']['play_button'].collidepoint(event.pos):
+                            self.click_sound.play()
                             self.current_menu = 'map'
                             self.load_maps()
 
                     elif self.current_menu == 'map':
                         if self.menus['map']['play_button'].collidepoint(event.pos):
+                            self.click_sound.play()
+
                             map = self.menus['map']['map_list'][self.menus['map']['current_map']]
                             self.game.init_game(map['name'])
+                            self.current_menu = 'main'
                             self.running = False
                         elif self.menus['map']['previous_button'].collidepoint(event.pos):
+                            self.click_sound.play()
                             self.menus['map']['current_map'] -= 1
                             self.menus['map']['current_map'] %= len(self.menus['map']['map_list'])
                         elif self.menus['map']['next_button'].collidepoint(event.pos):
+                            self.click_sound.play()
                             self.menus['map']['current_map'] += 1
                             self.menus['map']['current_map'] %= len(self.menus['map']['map_list'])
 

@@ -23,7 +23,7 @@ class Grenade:
         self.image = load_image('weapons/grenade.png')
         self.rotation = 0
         self.rotation_force = int(15 * (self.force / 150))
-        self.timer = 4
+        self.timer = 5
         self.collisions = {'top': False, 'bottom': False, 'left': False, 'right': False}
         self.game = game
 
@@ -46,10 +46,10 @@ class Grenade:
         force = min(sqrt(vector[0] ** 2 + vector[1] ** 2), cls.max_force)
         start_pos = list(player_pos)
 
-        max_point_timer = 0.2
-        point_timer = 0.2
+        max_point_timer = 0.3
+        point_timer = 0.1
         time = 0
-        timer = 4
+        timer = 5
         trajectory = []
         pos = list(start_pos)
 
@@ -139,6 +139,7 @@ class Grenade:
                 vx = random.uniform(-r, r)
                 vy = random.uniform(-r, r)
                 self.game.particles.append(Particle(self.game, "particle", (self.pos[0], self.pos[1]), (vx, vy)))
+            self.game.sfx['explosion'].play()
             self.game.projectile = None
 
         # Time
@@ -199,6 +200,9 @@ class Grenade:
             if self.angle < 0:
                 self.angle += 2 * pi
             self.rotation_force = int(15 * (self.force / 150))
+
+            if self.force >= 10:
+                self.game.sfx['tap'].play()
 
     def render(self, surf, offset):
         img = self.image.copy()

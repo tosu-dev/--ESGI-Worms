@@ -1,8 +1,7 @@
 import math
-import pygame
 import sys
 from time import time
-from random import random, randint
+from random import random, randint, choice
 
 from scripts.core.animation import Animation
 from scripts.core.constants import *
@@ -69,14 +68,44 @@ class Game:
 
             'particles/particle': Animation(load_images('particles/particle'), 7, loop=False),
         }
-        self.musics = {
-            'default': pygame.mixer.Sound(MUSIC_PATH + 'music.wav'),
+        self.menu_assets = {
+            'main_menu': pygame.transform.scale_by(load_image('menu/main_menu.png', colorkey=None, alpha=True), 3),
         }
-        self.musics['default'].set_volume(0.5)
+        self.menu_rects = {
+            'main_menu': pygame.Rect((SCREEN_SIZE[0] // 2 - self.menu_assets['main_menu'].get_width() // 2,
+                                        SCREEN_SIZE[1] - self.menu_assets['main_menu'].get_height() - 20),
+                                       self.menu_assets['main_menu'].get_size()),
+        }
+
+        self.musics = {
+            'potato': pygame.mixer.Sound(MUSIC_PATH + 'potato.wav'),
+            'time_for_adventure': pygame.mixer.Sound(MUSIC_PATH + 'time_for_adventure.mp3'),
+        }
+        self.musics['potato'].set_volume(0.2)
+        self.musics['time_for_adventure'].set_volume(0.2)
+        self.music = self.musics[choice(list(self.musics.keys()))]
+
         self.sfx = {
             'ambience': pygame.mixer.Sound(SFX_PATH + 'ambience.wav'),
+            'menu_click': pygame.mixer.Sound(SFX_PATH + 'jump.wav'),
+            'hurt': pygame.mixer.Sound(SFX_PATH + 'hurt.wav'),
+            'tap': pygame.mixer.Sound(SFX_PATH + 'tap.wav'),
+            'explosion': pygame.mixer.Sound(SFX_PATH + 'explosion.wav'),
+            'parachute': pygame.mixer.Sound(SFX_PATH + 'parachute.wav'),
+            'jump': pygame.mixer.Sound(SFX_PATH + 'jump.wav'),
+            'footstep': pygame.mixer.Sound(SFX_PATH + 'footstep.wav'),
+            'victory': pygame.mixer.Sound(SFX_PATH + 'victory.wav'),
         }
         self.sfx['ambience'].set_volume(0.2)
+        self.sfx['menu_click'].set_volume(0.1)
+        self.sfx['explosion'].set_volume(0.1)
+        self.sfx['tap'].set_volume(0.5)
+        self.sfx['hurt'].set_volume(2)
+        self.sfx['parachute'].set_volume(0.5)
+        self.sfx['jump'].set_volume(0.6)
+        self.sfx['footstep'].set_volume(0.4)
+        self.sfx['victory'].set_volume(0.5)
+
         self.players = [
             Player(self, (0, 0), (8, 15), 0),
             Player(self, (0, 0), (8, 15), 1),
@@ -106,7 +135,7 @@ class Game:
 
     def load_level(self, map):
         self.tilemap = load_map(self, map)
-        self.musics['default'].play(-1)
+        self.music.play(-1)
         self.sfx['ambience'].play(-1)
         self.player_turn = 0
         self.players[0].air_time = 0
@@ -145,15 +174,17 @@ class Game:
                 l = math.sqrt(v[0]**2 + v[1]**2)
                 ratio = 1 - (l / r)
                 player.health -= self.projectile.damage * ratio
+                self.sfx['hurt'].play()
                 if player.health <= 0:
                     self.winner = (i + 1) % 2
 
+
     def run(self):
+        victory_music = False
         prev_time = time()
         while True:
             if self.menu.running:
                 self.menu.run()
-                # self.screen.blit(pygame.transform.scale(self.display, SCREEN_SIZE), (0, 0))
                 pygame.display.update()
                 self.clock.tick(FPS)
                 continue
@@ -220,6 +251,13 @@ class Game:
                             self.players[self.player_turn].charge_shoot()
                         if event.button == 3:
                             self.players[self.player_turn].cancel_shoot()
+                    elif self.winner is not None and not self.changing_turn:
+                        if event.button == 1:
+                            if self.menu_rects['main_menu'].collidepoint(event.pos):
+                                self.music.stop()
+                                self.sfx['ambience'].stop()
+                                self.sfx['menu_click'].play()
+                                self.menu.running = True
 
                 if event.type == pygame.MOUSEBUTTONUP:
                     if self.is_playing():
@@ -329,7 +367,14 @@ class Game:
             )
             screenshake = ((random() * self.screenshake - self.screenshake / 2), (random() * self.screenshake - self.screenshake / 2))
             self.screen.blit(screen, (dest[0] + screenshake[0], dest[1] + screenshake[1]))
+
             if self.winner is not None and not self.changing_turn:
+                if not victory_music:
+                    self.music.stop()
+                    self.sfx['victory'].play()
+                    victory_music = True
                 self.font.render(self.screen, f"Winner is player {self.winner + 1}", (SCREEN_SIZE[0] // 2, SCREEN_SIZE[1] // 2 - 120), center=True, bg=(0, 0, 0))
+                self.screen.blit(self.menu_assets['main_menu'], self.menu_rects['main_menu'])
+
             pygame.display.update()
             self.clock.tick(FPS)
