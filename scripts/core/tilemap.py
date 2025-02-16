@@ -23,6 +23,7 @@ class TileMap:
         self.tilemap = tilemap
         self.offgrid_tiles = []
         self.game = game
+
     def extract(self, id_pairs, keep=False):
         matches = []
 

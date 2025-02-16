@@ -22,7 +22,7 @@ class Player(PhysicsEntity):
         self.shoot_offset = [10, 10]
 
         self.weapon = 0
-        self.health = 10
+        self.health = 100
 
         self.footstep_tick = 16
 
@@ -124,7 +124,7 @@ class Player(PhysicsEntity):
         pygame.draw.rect(surf, (255, 0, 0), (healthbar_pos, (healthbar_width, 2)))
         pygame.draw.rect(surf, (0, 255, 0), (healthbar_pos, (self.health / 100 * healthbar_width, 2)))
 
-        # Rocket trajectory
+        # Weapon trajectory
         if self.charge_shooting:
             mouse_pos = add_points(self.game.mouse_pos, self.game.scroll)
             pos = add_points(self.pos, self.shoot_offset)

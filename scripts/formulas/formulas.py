@@ -71,9 +71,9 @@ def compute_line_grenade(x0, y0, velocity, angle, friction = None, step = step):
 
     return line
 
-def compute_archimedes_velocity(radius):
+def compute_archimedes_velocity(speed, radius):
     """
     Computes the terminal velocity of an object in a fluid
     Parameters: Fluid density (float), object volume (float), gravity force (float)
     """
-    return (math.pi * radius**2 / 2) * density * gravity_force
+    return (((math.pi * radius**2) / 2) * density * gravity_force) / speed
