@@ -22,7 +22,7 @@ class Player(PhysicsEntity):
         self.shoot_offset = [10, 10]
 
         self.weapon = 0
-        self.health = 100
+        self.health = 20
 
         self.footstep_tick = 16
 
@@ -60,6 +60,14 @@ class Player(PhysicsEntity):
                 self.game.projectile = Grenade.create(pos, mouse_pos, self.game)
 
     def update(self, tilemap, movement=(0, 0), delta_time=1):
+        if self.health <= 0:
+            return
+
+        if self.pos[1] > 1500:
+            self.health = 0
+            self.game.sfx['hurt'].play()
+            self.game.shake_screen(60, 0.2)
+
         # Charge jump
         if self.charge_jumping:
             self.set_action('idle')
@@ -110,34 +118,35 @@ class Player(PhysicsEntity):
             self.velocity[0] = min(self.velocity[0] + 0.1, 0)
 
     def render(self, surf, offset=(0, 0)):
-        player_render_pos = self.get_render_pos(offset)
+        if self.health > 0:
+            player_render_pos = self.get_render_pos(offset)
 
-        # Parachute
-        if self.parachute:
-            surf.blit(self.game.assets['parachute'], (player_render_pos[0] - 2, player_render_pos[1] - 8))
+            # Parachute
+            if self.parachute:
+                surf.blit(self.game.assets['parachute'], (player_render_pos[0] - 2, player_render_pos[1] - 8))
 
-        super().render(surf, offset)
+            super().render(surf, offset)
 
-        # Health bar
-        healthbar_pos = (player_render_pos[0] - 3, player_render_pos[1] - 5)
-        healthbar_width = 20
-        pygame.draw.rect(surf, (255, 0, 0), (healthbar_pos, (healthbar_width, 2)))
-        pygame.draw.rect(surf, (0, 255, 0), (healthbar_pos, (self.health / 100 * healthbar_width, 2)))
+            # Health bar
+            healthbar_pos = (player_render_pos[0] - 3, player_render_pos[1] - 5)
+            healthbar_width = 20
+            pygame.draw.rect(surf, (255, 0, 0), (healthbar_pos, (healthbar_width, 2)))
+            pygame.draw.rect(surf, (0, 255, 0), (healthbar_pos, (self.health / 100 * healthbar_width, 2)))
 
-        # Weapon trajectory
-        if self.charge_shooting:
-            mouse_pos = add_points(self.game.mouse_pos, self.game.scroll)
-            pos = add_points(self.pos, self.shoot_offset)
+            # Weapon trajectory
+            if self.charge_shooting:
+                mouse_pos = add_points(self.game.mouse_pos, self.game.scroll)
+                pos = add_points(self.pos, self.shoot_offset)
 
-            trajectory = []
-            if self.weapon == 0:
-                trajectory = Rocket.calculate_trajectory(self.game.tilemap, self.game.wind, point_to_int(pos), mouse_pos, FPS)
-            elif self.weapon == 1:
-                trajectory = Grenade.calculate_trajectory(self.game.tilemap, point_to_int(pos), mouse_pos, FPS)
+                trajectory = []
+                if self.weapon == 0:
+                    trajectory = Rocket.calculate_trajectory(self.game.tilemap, self.game.wind, point_to_int(pos), mouse_pos, FPS)
+                elif self.weapon == 1:
+                    trajectory = Grenade.calculate_trajectory(self.game.tilemap, point_to_int(pos), mouse_pos, FPS)
 
-            radius = 4.5
-            c = 255
-            for i, point in enumerate(trajectory):
-                pygame.draw.circle(surf, (c, c, c), add_points(point, self.game.scroll, sub=True), radius)
-                radius = max(2, radius * 0.95)
-                c = max(100, c * 0.97)
+                radius = 4.5
+                c = 255
+                for i, point in enumerate(trajectory):
+                    pygame.draw.circle(surf, (c, c, c), add_points(point, self.game.scroll, sub=True), radius)
+                    radius = max(2, radius * 0.95)
+                    c = max(100, c * 0.97)

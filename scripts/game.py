@@ -1,11 +1,12 @@
 import math
 import sys
 from time import time
-from random import random, randint, choice
+from random import random, randint, choice, uniform
 
 from scripts.core.animation import Animation
 from scripts.core.constants import *
 from scripts.core.font import Font
+from scripts.core.particle import Particle
 from scripts.core.utils import *
 from scripts.entities.player import Player
 from scripts.features.minimap import Minimap
@@ -66,7 +67,8 @@ class Game:
             'grenade': load_image('weapons/grenade.png'),
             'weapon_frame_border': load_image('overlays/frame_border.png'),
 
-            'particles/particle': Animation(load_images('particles/particle'), 7, loop=False),
+            'particles/particle': Animation(load_images('particles/particle'), 8, loop=False),
+            'particles/blood': Animation(load_images('particles/blood'), 12, loop=False),
         }
         self.menu_assets = {
             'main_menu': pygame.transform.scale_by(load_image('menu/main_menu.png', colorkey=None, alpha=True), 3),
@@ -132,6 +134,7 @@ class Game:
         self.minimap = Minimap(self, (8, 8), SCREEN_SIZE, 8, 1)
         pygame.time.set_timer(pygame.USEREVENT, 1000)
         self.timer = Timer(30, (64, 64))
+        self.victory_music = False
         self.load_level(map)
 
     def load_level(self, map):
@@ -176,15 +179,33 @@ class Game:
                 ratio = 1 - (l / r)
                 player.health -= self.projectile.damage * ratio
                 self.sfx['hurt'].play()
-                if player.health <= 0:
-                    self.winner = (i + 1) % 2
+                for _ in range(7):
+                    r = 1
+                    vx = uniform(-r, r)
+                    vy = uniform(-r, r)
+                    self.particles.append(Particle(self, "blood", player.pos, (vx, vy)))
+
+    def kill_player(self, player):
+        player.health = 0
+        for _ in range(50):
+            r = 3
+            vx = uniform(-r, r)
+            vy = uniform(-r, r)
+            self.particles.append(Particle(self, "blood", player.pos, (vx, vy)))
+
+    def check_player_death(self):
+        for i, player in enumerate(self.players):
+            if player.health <= 0:
+                self.kill_player(player)
+                self.winner = (i + 1) % 2
+                return True
+        return False
 
     def shake_screen(self, force, duration):
         self.screenshake_timer = duration
         self.screenshake = force
 
     def run(self):
-        victory_music = False
         prev_time = time()
         while True:
             if self.menu.running:
@@ -295,16 +316,26 @@ class Game:
                 self.projectile.render(self.display, offset=render_scroll)
                 self.projectile.update(fps=FPS)
                 self.movement = [[False, False], [False, False]]
+                # Player death
+                self.check_player_death()
             # Changing turn
             elif self.changing_turn:
                 self.changing_turn_timer -= 1 / FPS
                 if self.changing_turn_timer <= 0:
                     self.change_player_turn()
+            # Victory
             elif self.winner is not None:
+                self.player_turn = self.winner
+                self.changing_turn = False
                 self.zoom = min(1.8, self.zoom + 0.1)
             # Playing
             else:
                 self.zoom = max(1, self.zoom - 0.1)
+
+                # Player death
+                if self.check_player_death():
+                    self.changing_turn = True
+
                 # Timer
                 self.timer.render(self.display, (10, 406))
 
@@ -380,10 +411,10 @@ class Game:
             self.screen.blit(screen, (dest[0] + screenshake[0], dest[1] + screenshake[1]))
 
             if self.winner is not None and not self.changing_turn:
-                if not victory_music:
+                if not self.victory_music:
                     self.music.stop()
                     self.sfx['victory'].play()
-                    victory_music = True
+                    self.victory_music = True
                 self.font.render(self.screen, f"Winner is player {self.winner + 1}", (SCREEN_SIZE[0] // 2, SCREEN_SIZE[1] // 2 - 120), center=True, bg=(0, 0, 0))
                 self.screen.blit(self.menu_assets['main_menu'], self.menu_rects['main_menu'])
 
